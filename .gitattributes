@@ -1,0 +1,2 @@
+ThirdParty/Vulkan-1.2.135.0/Lib/shaderc_combined.lib filter=lfs diff=lfs merge=lfs -text
+ThirdParty/Vulkan-1.2.135.0/Lib/SPIRV-Tools-opt.lib filter=lfs diff=lfs merge=lfs -text
