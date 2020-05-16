@@ -1,6 +1,17 @@
 #pragma once
 
 #include <vulkan\vulkan.hpp>
+#include <optional>
+
+struct QueueFamilyIndices
+{
+	std::optional<uint32_t> GraphicsFamily;
+
+	bool IsComplete()
+	{
+		return GraphicsFamily.has_value();
+	}
+};
 
 class VulkanInstance
 {
@@ -15,8 +26,12 @@ private:
 	bool CreateDebugMessenger();
 	bool HasWantedValidationLayerSupport();
 
-	bool CreateDevice();
+	bool CreatePhysicalDevice();
 	bool IsDeviceUsable(VkPhysicalDevice device);
+
+	bool CreateLogicalDevice();
+
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 	void InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
@@ -29,10 +44,15 @@ private:
 private:
 	VkInstance m_VkInstance = VK_NULL_HANDLE;
 
-	VkPhysicalDevice m_VkDevice = VK_NULL_HANDLE;
+	VkPhysicalDevice m_VkPhysicalDevice = VK_NULL_HANDLE;
+
+	VkDevice m_VkDevice = VK_NULL_HANDLE;
+
+	VkQueue m_VkQueue = VK_NULL_HANDLE; // (Should I be using nullptr here??)
 	
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
 
+private:
 	const std::vector<const char*> m_WantedValidationLayers = {
 		"VK_LAYER_KHRONOS_validation"
 	};

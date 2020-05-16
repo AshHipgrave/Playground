@@ -10,6 +10,8 @@ VulkanInstance::~VulkanInstance()
 {
 	if (m_VkInstance)
 	{
+		::vkDestroyDevice(m_VkDevice, nullptr);
+
 		if (m_bEnableValidationLayers)
 		{
 			DestroyDebugUtilsMessengerEXT(m_VkInstance, m_VkDebugMessenger, nullptr);
@@ -21,6 +23,8 @@ VulkanInstance::~VulkanInstance()
 
 bool VulkanInstance::InitVulkan()
 {
+	// TODO: Add proper error handling
+
 	if (!CreateInstance())
 	{
 		::OutputDebugString(L"Failed to create a Vulkan Instance!");
@@ -33,7 +37,13 @@ bool VulkanInstance::InitVulkan()
 		return false;
 	}
 
-	if (!CreateDevice())
+	if (!CreatePhysicalDevice())
+	{
+		::OutputDebugString(L"Failed to create VkDevice!");
+		return false;
+	}
+
+	if (!CreateLogicalDevice())
 	{
 		::OutputDebugString(L"Failed to create VkDevice!");
 		return false;
@@ -126,7 +136,7 @@ bool VulkanInstance::HasWantedValidationLayerSupport()
 	return true;
 }
 
-bool VulkanInstance::CreateDevice()
+bool VulkanInstance::CreatePhysicalDevice()
 {
 	uint32_t deviceCount = 0;
 	::vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, nullptr);
@@ -144,12 +154,12 @@ bool VulkanInstance::CreateDevice()
 	{
 		if (IsDeviceUsable(device))
 		{
-			m_VkDevice = device;
+			m_VkPhysicalDevice = device;
 			break;
 		}
 	}
 
-	if (m_VkDevice == VK_NULL_HANDLE)
+	if (m_VkPhysicalDevice == VK_NULL_HANDLE)
 	{
 		::OutputDebugString(L"Failed to find a usable Vulkan device.");
 		return false;
@@ -160,7 +170,89 @@ bool VulkanInstance::CreateDevice()
 
 bool VulkanInstance::IsDeviceUsable(VkPhysicalDevice device)
 {
-	return false;
+	QueueFamilyIndices indices = FindQueueFamilies(device);
+
+	return indices.IsComplete();
+}
+
+bool VulkanInstance::CreateLogicalDevice()
+{
+	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
+
+	VkDeviceQueueCreateInfo queueCreateInfo = {};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
+	queueCreateInfo.queueFamilyIndex = indices.GraphicsFamily.value();
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.0f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	VkPhysicalDeviceFeatures deviceFeatures = {}; // TODO
+
+	VkDeviceCreateInfo deviceCreateInfo = {};
+	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+	deviceCreateInfo.queueCreateInfoCount = 1;
+
+	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+
+	deviceCreateInfo.enabledExtensionCount = 0; //static_cast<uint32_t>(m_WantedExtensions.size());
+	deviceCreateInfo.ppEnabledExtensionNames = nullptr; //m_WantedExtensions.data();	// TODO: This is causing an exception saying the requested extensions aren't supported :/
+
+	if (m_bEnableValidationLayers)
+	{
+		deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_WantedValidationLayers.size());
+		deviceCreateInfo.ppEnabledLayerNames = m_WantedValidationLayers.data();
+	}
+	else
+	{
+		deviceCreateInfo.enabledLayerCount = 0;
+		deviceCreateInfo.ppEnabledLayerNames = nullptr;
+	}
+
+	VkResult result = ::vkCreateDevice(m_VkPhysicalDevice, &deviceCreateInfo, nullptr, &m_VkDevice);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create logic device!");
+		return false;
+	}
+
+	::vkGetDeviceQueue(m_VkDevice, indices.GraphicsFamily.value(), 0, &m_VkQueue);
+
+	return true;
+}
+
+QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice device)
+{
+	QueueFamilyIndices supportedIndicies;
+
+	uint32_t queueFamilyCount = 0;
+	::vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	::vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+	int idx = 0;
+
+	for (const auto& queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			supportedIndicies.GraphicsFamily = idx;
+		}
+
+		if (supportedIndicies.IsComplete())
+		{
+			break;
+		}
+
+		idx++;
+	}
+
+	return supportedIndicies;
 }
 
 void VulkanInstance::InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
