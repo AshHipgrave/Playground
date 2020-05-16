@@ -46,7 +46,7 @@ int GameBase::Run()
 		{
 			m_GameTimer.Tick();
 
-			if (m_bIsAppPaused)
+			if (!m_bIsAppPaused)
 			{
 				Update(m_GameTimer);
 				Draw(m_GameTimer);
@@ -139,6 +139,7 @@ LRESULT GameBase::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				else if (m_bIsResizing)
 				{
 					// Do Nothing. Wait for the user to finish resizing the window, at which point WM_EXITSIZEMOVE is sent and we can correctly handle the new Window size.
+					// Whilst I could combine this with the below to be: 'if (!m_bIsReiszing) { OnResize(); }' It's slightly more readable to know we're deliberately not doing anything (Also looks odd to call 'OnResize()' right after checking '!Resizing').
 				}
 				else
 				{
@@ -213,7 +214,7 @@ LRESULT GameBase::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	return DefWindowProc(hWnd, msg, wParam, lParam);
+	return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 bool GameBase::InitMainWindow()
