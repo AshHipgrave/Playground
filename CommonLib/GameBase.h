@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "GameTimer.h"
+#include "VulkanInstance.h"
 
 class GameBase
 {
@@ -40,7 +41,7 @@ protected:
 
 protected:
 	bool InitMainWindow();
-	bool InitVulkan();
+	bool InitGraphics();
 
 protected:
 	static GameBase* m_pGameBase;
@@ -57,6 +58,7 @@ protected:
 	bool m_bIsResizing = false;
 
 	GameTimer m_GameTimer;
+	VulkanInstance m_VulkanInstance;
 
 	int m_ClientWindowWidth = 800;
 	int m_ClientWindowHeight = 600;

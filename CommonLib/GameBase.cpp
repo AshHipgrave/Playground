@@ -68,7 +68,7 @@ bool GameBase::Initialise()
 		return false;
 	}
 
-	if (!InitVulkan())
+	if (!InitGraphics())
 	{
 		return false;
 	}
@@ -258,7 +258,13 @@ bool GameBase::InitMainWindow()
 	return true;
 }
 
-bool GameBase::InitVulkan()
+bool GameBase::InitGraphics()
 {
+	if (!m_VulkanInstance.CreateInstance())
+	{
+		::MessageBox(0, L"Failed to create Vulkan instance!", 0, 0);
+		return false;
+	}
+
 	return true;
 }

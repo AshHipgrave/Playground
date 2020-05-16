@@ -4,7 +4,7 @@ GameTimer::GameTimer()
 	: m_SecondsPerCount(0), m_DeltaTime(-1.0), m_BaseTime(0), m_PausedTime(0), m_StopTime(0), m_PrevTime(0), m_CurrentTime(0), m_bIsStopped(false)
 {
 	__int64 countsPerSecond;
-	QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
+	::QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
 
 	m_SecondsPerCount = 1.0 / (double)countsPerSecond;
 }
@@ -27,7 +27,7 @@ float GameTimer::DeltaTime() const
 void GameTimer::Reset()
 {
 	__int64 currentTime;
-	QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
+	::QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
 
 	m_BaseTime = currentTime;
 	m_PrevTime = currentTime;
@@ -40,7 +40,7 @@ void GameTimer::Reset()
 void GameTimer::Start()
 {
 	__int64 startTime;
-	QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
+	::QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
 
 	if (m_bIsStopped)
 	{
@@ -58,7 +58,7 @@ void GameTimer::Stop()
 	if (!m_bIsStopped)
 	{
 		__int64 currentTime;
-		QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
+		::QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
 
 		m_StopTime = currentTime;
 
@@ -75,7 +75,7 @@ void GameTimer::Tick()
 	}
 
 	__int64 currentTime;
-	QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
+	::QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
 
 	m_CurrentTime = currentTime;
 

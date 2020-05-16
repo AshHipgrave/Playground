@@ -4,39 +4,52 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CommonLib", "CommonLib\CommonLib.vcxproj", "{00826B4A-09BA-4140-9E44-8E6D4874B82B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5A67D099-0264-439B-AD4D-76532103E45F} = {5A67D099-0264-439B-AD4D-76532103E45F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlaygroundGameApp", "PlaygroundGameApp\PlaygroundGameApp.vcxproj", "{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}"
 	ProjectSection(ProjectDependencies) = postProject
 		{00826B4A-09BA-4140-9E44-8E6D4874B82B} = {00826B4A-09BA-4140-9E44-8E6D4874B82B}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThirdParty", "ThirdParty", "{80F42EA5-8F9B-4DE6-9ACA-101B438540FF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DearImGui", "ThirdParty\imgui-1.76\DearImGui.vcxproj", "{5A67D099-0264-439B-AD4D-76532103E45F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utils", "Utils", "{11B37058-BE0B-49CE-B171-936CAB98669F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ListVulkanExtensions", "Utils\ListVulkanExtensions\ListVulkanExtensions.vcxproj", "{01370068-B14B-4DA9-AAAC-DA52A6B839E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Debug|x64.ActiveCfg = Debug|x64
 		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Debug|x64.Build.0 = Debug|x64
-		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Debug|x86.ActiveCfg = Debug|Win32
-		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Debug|x86.Build.0 = Debug|Win32
 		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Release|x64.ActiveCfg = Release|x64
 		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Release|x64.Build.0 = Release|x64
-		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Release|x86.ActiveCfg = Release|Win32
-		{00826B4A-09BA-4140-9E44-8E6D4874B82B}.Release|x86.Build.0 = Release|Win32
 		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Debug|x64.ActiveCfg = Debug|x64
 		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Debug|x64.Build.0 = Debug|x64
-		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Debug|x86.ActiveCfg = Debug|Win32
-		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Debug|x86.Build.0 = Debug|Win32
 		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Release|x64.ActiveCfg = Release|x64
 		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Release|x64.Build.0 = Release|x64
-		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Release|x86.ActiveCfg = Release|Win32
-		{1FAB0EA5-6A82-4BAA-9ADC-B120F9093BC1}.Release|x86.Build.0 = Release|Win32
+		{5A67D099-0264-439B-AD4D-76532103E45F}.Debug|x64.ActiveCfg = Debug|x64
+		{5A67D099-0264-439B-AD4D-76532103E45F}.Debug|x64.Build.0 = Debug|x64
+		{5A67D099-0264-439B-AD4D-76532103E45F}.Release|x64.ActiveCfg = Release|x64
+		{5A67D099-0264-439B-AD4D-76532103E45F}.Release|x64.Build.0 = Release|x64
+		{01370068-B14B-4DA9-AAAC-DA52A6B839E3}.Debug|x64.ActiveCfg = Debug|x64
+		{01370068-B14B-4DA9-AAAC-DA52A6B839E3}.Debug|x64.Build.0 = Debug|x64
+		{01370068-B14B-4DA9-AAAC-DA52A6B839E3}.Release|x64.ActiveCfg = Release|x64
+		{01370068-B14B-4DA9-AAAC-DA52A6B839E3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5A67D099-0264-439B-AD4D-76532103E45F} = {80F42EA5-8F9B-4DE6-9ACA-101B438540FF}
+		{01370068-B14B-4DA9-AAAC-DA52A6B839E3} = {11B37058-BE0B-49CE-B171-936CAB98669F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8AAF62B8-F964-48F0-B004-62F867D17C82}
