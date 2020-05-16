@@ -260,11 +260,14 @@ bool GameBase::InitMainWindow()
 
 bool GameBase::InitGraphics()
 {
-	if (!m_VulkanInstance.CreateInstance())
+	// if (Graphics.Vulkan()) {
+	if (!m_VulkanInstance.InitVulkan())
 	{
 		::MessageBox(0, L"Failed to create Vulkan instance!", 0, 0);
 		return false;
 	}
+	// } else if (Graphics.DX12) { InitDX12 }
+	// else if (Graphics.<API>) { Init<InsertApiHere> } ...
 
 	return true;
 }

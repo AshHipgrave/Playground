@@ -1,7 +1,5 @@
 #include "VulkanInstance.h"
 
-#include <cstring>
-#include <iostream>
 #include <sstream>
 
 VulkanInstance::VulkanInstance()
@@ -19,6 +17,29 @@ VulkanInstance::~VulkanInstance()
 
 		::vkDestroyInstance(m_VkInstance, nullptr);
 	}
+}
+
+bool VulkanInstance::InitVulkan()
+{
+	if (!CreateInstance())
+	{
+		::OutputDebugString(L"Failed to create a Vulkan Instance!");
+		return false;
+	}
+
+	if (!CreateDebugMessenger())
+	{
+		::OutputDebugString(L"Failed to create Debug messenger!");
+		return false;
+	}
+
+	if (!CreateDevice())
+	{
+		::OutputDebugString(L"Failed to create VkDevice!");
+		return false;
+	}
+
+	return true;
 }
 
 bool VulkanInstance::CreateInstance()
@@ -45,13 +66,13 @@ bool VulkanInstance::CreateInstance()
 
 	createInfo.pApplicationInfo = &appInfo;
 
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedExtensions.size());
+	createInfo.ppEnabledExtensionNames = m_WantedExtensions.data();
+
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 
 	if (m_bEnableValidationLayers)
 	{
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedExtensions.size());
-		createInfo.ppEnabledExtensionNames = m_WantedExtensions.data();
-
 		createInfo.enabledLayerCount = static_cast<uint32_t>(m_WantedValidationLayers.size());
 		createInfo.ppEnabledLayerNames = m_WantedValidationLayers.data();
 
@@ -72,51 +93,7 @@ bool VulkanInstance::CreateInstance()
 		return false;
 	}
 
-	if (!CreateDebugMessenger())
-	{
-		::OutputDebugString(L"Failed to create Debug messenger!");
-		return false;
-	}
-
 	return true;
-}
-
-VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
-{
-	//TEMP: Bit hacky but a quick-n-dirty way to view the output (Until I get proper console output up and running).. Basically convert 'char *' to 'LPCWSTR' for OutputDebugString() to consume.
-
-	std::wstringstream ss;
-
-	ss << "VK: " << pCallbackData->pMessage << std::endl;
-
-	::OutputDebugString(ss.str().c_str());
-
-	return VK_FALSE;
-}
-
-VkResult VulkanInstance::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
-{
-	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-
-	if (func != nullptr)
-	{
-		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-	}
-	else
-	{
-		::OutputDebugString(L"Error: Function not found - vkCreateDebugUtilsMessengerEXT");
-		return VK_ERROR_EXTENSION_NOT_PRESENT;
-	}
-}
-
-void VulkanInstance::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
-{
-	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-
-	if (func != nullptr)
-	{
-		func(instance, debugMessenger, pAllocator);
-	}
 }
 
 bool VulkanInstance::HasWantedValidationLayerSupport()
@@ -147,6 +124,43 @@ bool VulkanInstance::HasWantedValidationLayerSupport()
 	}
 
 	return true;
+}
+
+bool VulkanInstance::CreateDevice()
+{
+	uint32_t deviceCount = 0;
+	::vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, nullptr);
+
+	if (deviceCount == 0)
+	{
+		::OutputDebugString(L"No graphics devices supporting Vulkan were found.");
+		return false;
+	}
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	::vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, devices.data());
+
+	for (const auto& device : devices)
+	{
+		if (IsDeviceUsable(device))
+		{
+			m_VkDevice = device;
+			break;
+		}
+	}
+
+	if (m_VkDevice == VK_NULL_HANDLE)
+	{
+		::OutputDebugString(L"Failed to find a usable Vulkan device.");
+		return false;
+	}
+
+	return true;
+}
+
+bool VulkanInstance::IsDeviceUsable(VkPhysicalDevice device)
+{
+	return false;
 }
 
 void VulkanInstance::InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
@@ -180,4 +194,42 @@ bool VulkanInstance::CreateDebugMessenger()
 		return false;
 	}
 	return true;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+{
+	//TEMP: Bit hacky but a quick-n-dirty way to view the output (Until I get proper console output up and running).. Basically convert 'char *' to 'LPCWSTR' for OutputDebugString() to consume.
+
+	std::wstringstream ss;
+
+	ss << "VK: " << pCallbackData->pMessage << std::endl;
+
+	::OutputDebugString(ss.str().c_str());
+
+	return VK_FALSE;
+}
+
+VkResult VulkanInstance::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+{
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)::vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+
+	if (func != nullptr)
+	{
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	else
+	{
+		::OutputDebugString(L"Error: Function not found - vkCreateDebugUtilsMessengerEXT");
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+void VulkanInstance::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+{
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)::vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+
+	if (func != nullptr)
+	{
+		func(instance, debugMessenger, pAllocator);
+	}
 }

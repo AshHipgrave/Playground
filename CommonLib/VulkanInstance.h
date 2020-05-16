@@ -8,23 +8,28 @@ public:
 	VulkanInstance();
 	~VulkanInstance();
 
-	bool CreateInstance();
+	bool InitVulkan();
 
 private:
+	bool CreateInstance();
+	bool CreateDebugMessenger();
 	bool HasWantedValidationLayerSupport();
+
+	bool CreateDevice();
+	bool IsDeviceUsable(VkPhysicalDevice device);
 
 	void InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
-	bool CreateDebugMessenger();
-
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
+	// Proxy functions to VK extension functions.
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
 private:
 	VkInstance m_VkInstance = VK_NULL_HANDLE;
+
+	VkPhysicalDevice m_VkDevice = VK_NULL_HANDLE;
 	
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
 
@@ -34,7 +39,9 @@ private:
 
 	const std::vector<const char*> m_WantedExtensions = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
+#if defined(_DEBUG) || defined(DEBUG)
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+#endif
 	};
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -42,33 +49,4 @@ private:
 #else
 	const bool m_bEnableValidationLayers = false;
 #endif
-
-private:
-
-	
-	/*
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
-	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-
-		if (func != nullptr)
-		{
-			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-		}
-		else
-		{
-			::OutputDebugString(L"Error: Function not found - vkCreateDebugUtilsMessengerEXT");
-			return VK_ERROR_EXTENSION_NOT_PRESENT;
-		}
-	}
-
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
-	{
-		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-
-		if (func != nullptr)
-		{
-			func(instance, debugMessenger, pAllocator);
-		}
-	}*/
 };
