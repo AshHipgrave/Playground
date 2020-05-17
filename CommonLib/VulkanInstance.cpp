@@ -1,6 +1,7 @@
 #include "VulkanInstance.h"
 
 #include <sstream>
+#include <set>
 
 VulkanInstance::VulkanInstance()
 {
@@ -16,14 +17,18 @@ VulkanInstance::~VulkanInstance()
 		{
 			DestroyDebugUtilsMessengerEXT(m_VkInstance, m_VkDebugMessenger, nullptr);
 		}
+		
+		::vkDestroySurfaceKHR(m_VkInstance, m_VkSurfaceKhr, nullptr);
 
 		::vkDestroyInstance(m_VkInstance, nullptr);
 	}
 }
 
-bool VulkanInstance::InitVulkan()
+bool VulkanInstance::InitVulkan(HWND mainWindowHandle)
 {
-	// TODO: Add proper error handling
+	m_hMainWindowHandle = mainWindowHandle;
+
+	// TODO: Have a better way to do this rather than lots of if's
 
 	if (!CreateInstance())
 	{
@@ -34,6 +39,12 @@ bool VulkanInstance::InitVulkan()
 	if (!CreateDebugMessenger())
 	{
 		::OutputDebugString(L"Failed to create Debug messenger!");
+		return false;
+	}
+
+	if (!CreateSurface())
+	{
+		::OutputDebugString(L"Failed to create draw surface!");
 		return false;
 	}
 
@@ -179,22 +190,30 @@ bool VulkanInstance::CreateLogicalDevice()
 {
 	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
 
-	VkDeviceQueueCreateInfo queueCreateInfo = {};
-	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	std::set<uint32_t> uniqueQueueFamilies = { indices.GraphicsFamily.value(), indices.PresentFamily.value() };
 
-	queueCreateInfo.queueFamilyIndex = indices.GraphicsFamily.value();
-	queueCreateInfo.queueCount = 1;
+	const float queuePriority = 1.0f;
 
-	float queuePriority = 1.0f;
-	queueCreateInfo.pQueuePriorities = &queuePriority;
+	for (uint32_t queueFamily : uniqueQueueFamilies)
+	{
+		VkDeviceQueueCreateInfo queueCreateInfo = {};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {}; // TODO
 
 	VkDeviceCreateInfo deviceCreateInfo = {};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-	deviceCreateInfo.queueCreateInfoCount = 1;
+	deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+	deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
 	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
@@ -220,7 +239,27 @@ bool VulkanInstance::CreateLogicalDevice()
 		return false;
 	}
 
-	::vkGetDeviceQueue(m_VkDevice, indices.GraphicsFamily.value(), 0, &m_VkQueue);
+	::vkGetDeviceQueue(m_VkDevice, indices.GraphicsFamily.value(), 0, &m_VkGraphicsQueue); 
+	::vkGetDeviceQueue(m_VkDevice, indices.PresentFamily.value(), 0, &m_VkPresentQueue);
+
+	return true;
+}
+
+bool VulkanInstance::CreateSurface()
+{
+	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
+	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+
+	surfaceCreateInfo.hwnd = m_hMainWindowHandle;
+	surfaceCreateInfo.hinstance = ::GetModuleHandle(nullptr);
+
+	VkResult result = ::vkCreateWin32SurfaceKHR(m_VkInstance, &surfaceCreateInfo, nullptr, &m_VkSurfaceKhr);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create window surface!");
+		return false;
+	}
 
 	return true;
 }
@@ -239,15 +278,21 @@ QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice device)
 
 	for (const auto& queueFamily : queueFamilies)
 	{
+		VkBool32 hasPresentSupport = false;
+		::vkGetPhysicalDeviceSurfaceSupportKHR(device, idx, m_VkSurfaceKhr, &hasPresentSupport);
+
+		if (hasPresentSupport)
+		{
+			supportedIndicies.PresentFamily = idx;
+		}
+
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			supportedIndicies.GraphicsFamily = idx;
 		}
 
-		if (supportedIndicies.IsComplete())
-		{
+		if (supportedIndicies.IsComplete()) 
 			break;
-		}
 
 		idx++;
 	}

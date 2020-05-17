@@ -261,7 +261,7 @@ bool GameBase::InitMainWindow()
 bool GameBase::InitGraphics()
 {
 	// if (Graphics.Vulkan()) {
-	if (!m_VulkanInstance.InitVulkan())
+	if (!m_VulkanInstance.InitVulkan(m_hMainWindowHandle))
 	{
 		::MessageBox(0, L"Failed to create Vulkan instance!", 0, 0);
 		return false;

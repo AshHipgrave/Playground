@@ -1,15 +1,24 @@
 #pragma once
 
-#include <vulkan\vulkan.hpp>
+#define VK_USE_PLATFORM_WIN32_KHR
+
+#include <Windows.h>
+
+#include <vulkan/vk_platform.h>
+#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan_win32.h>
+
 #include <optional>
+#include <vector>
 
 struct QueueFamilyIndices
 {
 	std::optional<uint32_t> GraphicsFamily;
+	std::optional<uint32_t> PresentFamily;
 
 	bool IsComplete()
 	{
-		return GraphicsFamily.has_value();
+		return GraphicsFamily.has_value() && PresentFamily.has_value();
 	}
 };
 
@@ -19,7 +28,7 @@ public:
 	VulkanInstance();
 	~VulkanInstance();
 
-	bool InitVulkan();
+	bool InitVulkan(HWND mainWindowHandle);
 
 private:
 	bool CreateInstance();
@@ -30,6 +39,8 @@ private:
 	bool IsDeviceUsable(VkPhysicalDevice device);
 
 	bool CreateLogicalDevice();
+
+	bool CreateSurface();
 
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
@@ -42,14 +53,19 @@ private:
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
 private:
+	HWND m_hMainWindowHandle  = nullptr;
+
 	VkInstance m_VkInstance = VK_NULL_HANDLE;
 
 	VkPhysicalDevice m_VkPhysicalDevice = VK_NULL_HANDLE;
 
 	VkDevice m_VkDevice = VK_NULL_HANDLE;
 
-	VkQueue m_VkQueue = VK_NULL_HANDLE; // (Should I be using nullptr here??)
+	VkQueue m_VkGraphicsQueue = VK_NULL_HANDLE;
+	VkQueue m_VkPresentQueue = VK_NULL_HANDLE;
 	
+	VkSurfaceKHR m_VkSurfaceKhr = VK_NULL_HANDLE;
+
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
 
 private:
@@ -59,6 +75,7 @@ private:
 
 	const std::vector<const char*> m_WantedExtensions = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
+		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #if defined(_DEBUG) || defined(DEBUG)
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 #endif
