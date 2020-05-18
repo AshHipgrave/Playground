@@ -1,23 +1,12 @@
 #pragma once
 
+#include "pch.h"
+
 #define VK_USE_PLATFORM_WIN32_KHR
-
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-#endif // !WIN32_LEAN_AND_MEAN
-
-#ifndef NOMINMAX
-	#define NOMINMAX
-#endif // !NOMINMAX
-
-#include <Windows.h>
 
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_win32.h>
-
-#include <optional>
-#include <vector>
 
 struct QueueFamilyIndices
 {
@@ -45,7 +34,6 @@ public:
 	~VulkanInstance();
 
 	bool InitVulkan(HWND mainWindowHandle);
-	bool CreateSwapChain();
 
 private:
 	bool CreateInstance();
@@ -54,6 +42,10 @@ private:
 
 	bool CreatePhysicalDevice();
 	bool CreateLogicalDevice();
+	bool CreateSwapChain();
+
+	bool CreateImageViews();
+	bool CreateGraphicsPipeline();
 
 	VkSurfaceFormatKHR SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR SelectSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
@@ -96,6 +88,7 @@ private:
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
 
 	std::vector<VkImage> m_SwapChainImages;
+	std::vector<VkImageView> m_SwapChainImageViews;
 
 	VkFormat m_VkSwapChainFormat;
 	VkExtent2D m_VkSwapChainExtent2D;

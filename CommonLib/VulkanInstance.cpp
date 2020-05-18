@@ -1,11 +1,5 @@
 #include "VulkanInstance.h"
 
-#include <sstream>
-#include <set>
-#include <cstdint>
-#include <algorithm>
-#include <cassert>
-
 VulkanInstance::VulkanInstance()
 {
 }
@@ -14,6 +8,11 @@ VulkanInstance::~VulkanInstance()
 {
 	if (m_VkInstance)
 	{
+		for (auto imageView : m_SwapChainImageViews)
+		{
+			::vkDestroyImageView(m_VkDevice, imageView, nullptr);
+		}
+
 		::vkDestroySwapchainKHR(m_VkDevice, m_VkSwapChainKhr, nullptr);
 
 		::vkDestroyDevice(m_VkDevice, nullptr);
@@ -33,111 +32,31 @@ bool VulkanInstance::InitVulkan(HWND mainWindowHandle)
 {
 	m_hMainWindowHandle = mainWindowHandle;
 
-	// TODO: Have a better way to do this rather than lots of if's
+	// TODO: Have a better way to do this rather than lots of if checks.
 
 	if (!CreateInstance())
-	{
-		::OutputDebugString(L"Failed to create a Vulkan Instance!");
 		return false;
-	}
 
 	if (!CreateDebugMessenger())
-	{
-		::OutputDebugString(L"Failed to create Debug messenger!");
 		return false;
-	}
 
 	if (!CreateSurface())
-	{
-		::OutputDebugString(L"Failed to create draw surface!");
 		return false;
-	}
 
 	if (!CreatePhysicalDevice())
-	{
-		::OutputDebugString(L"Failed to create VkDevice!");
 		return false;
-	}
 
 	if (!CreateLogicalDevice())
-	{
-		::OutputDebugString(L"Failed to create VkDevice!");
 		return false;
-	}
 
 	if (!CreateSwapChain())
-	{
-		::OutputDebugString(L"Failed to create SwapChain!");
 		return false;
-	}
 
-	return true;
-}
-
-bool VulkanInstance::CreateSwapChain()
-{
-	assert(m_VkInstance && m_VkDevice && m_VkSurfaceKhr);
-
-	SwapChainSupportDetails swapChainSupportDetails = QuerySwapChainSupport(m_VkPhysicalDevice);
-
-	VkSurfaceFormatKHR surfaceFormat = SelectSwapSurfaceFormat(swapChainSupportDetails.SurfaceFormats);
-	VkPresentModeKHR presentMode = SelectSwapPresentMode(swapChainSupportDetails.PresentModes);
-	VkExtent2D extent = SelectSwapExtent(swapChainSupportDetails.SurfaceCapabilities);
-
-	uint32_t imageCount = swapChainSupportDetails.SurfaceCapabilities.minImageCount + 1;
-
-	if (swapChainSupportDetails.SurfaceCapabilities.maxImageCount > 0 && imageCount > swapChainSupportDetails.SurfaceCapabilities.maxImageCount)
-	{
-		imageCount = swapChainSupportDetails.SurfaceCapabilities.maxImageCount;
-	}
-
-	VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
-	swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-
-	swapChainCreateInfo.surface = m_VkSurfaceKhr;
-	swapChainCreateInfo.minImageCount = imageCount;
-	swapChainCreateInfo.imageFormat = surfaceFormat.format;
-	swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
-	swapChainCreateInfo.imageExtent = extent;
-	swapChainCreateInfo.imageArrayLayers = 1;
-	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; //VK_IMAGE_USAGE_TRANSFER_DST_BIT - For deferred style rendering where everything goes to a buffer first
-
-	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
-	uint32_t queueFamilyIndicies[] = { indices.GraphicsFamily.value(), indices.PresentFamily.value() };
-
-	if (indices.GraphicsFamily != indices.PresentFamily)
-	{
-		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-		swapChainCreateInfo.queueFamilyIndexCount = 2;
-		swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicies;
-	}
-	else
-	{
-		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		swapChainCreateInfo.queueFamilyIndexCount = 0;
-		swapChainCreateInfo.pQueueFamilyIndices = nullptr;
-	}
-
-	swapChainCreateInfo.preTransform = swapChainSupportDetails.SurfaceCapabilities.currentTransform;
-	swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	swapChainCreateInfo.presentMode = presentMode;
-	swapChainCreateInfo.clipped = VK_TRUE;
-	swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: Add support for swap chain recreation (e.g. Window resize!)
-
-	VkResult result = ::vkCreateSwapchainKHR(m_VkDevice, &swapChainCreateInfo, nullptr, &m_VkSwapChainKhr);
-
-	if (result != VK_SUCCESS)
-	{
-		::OutputDebugString(L"Failed to create SwapChain!");
+	if (!CreateImageViews())
 		return false;
-	}
 
-	::vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapChainKhr, &imageCount, nullptr);
-	m_SwapChainImages.resize(imageCount);
-	::vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapChainKhr, &imageCount, m_SwapChainImages.data());
-
-	m_VkSwapChainFormat = surfaceFormat.format;
-	m_VkSwapChainExtent2D = extent;
+	if (!CreateGraphicsPipeline())
+		return false;
 
 	return true;
 }
@@ -304,6 +223,115 @@ bool VulkanInstance::CreateLogicalDevice()
 	::vkGetDeviceQueue(m_VkDevice, indices.PresentFamily.value(), 0, &m_VkPresentQueue);
 
 	return true;
+}
+
+bool VulkanInstance::CreateSwapChain()
+{
+	assert(m_VkInstance && m_VkDevice && m_VkSurfaceKhr);
+
+	SwapChainSupportDetails swapChainSupportDetails = QuerySwapChainSupport(m_VkPhysicalDevice);
+
+	VkSurfaceFormatKHR surfaceFormat = SelectSwapSurfaceFormat(swapChainSupportDetails.SurfaceFormats);
+	VkPresentModeKHR presentMode = SelectSwapPresentMode(swapChainSupportDetails.PresentModes);
+	VkExtent2D extent = SelectSwapExtent(swapChainSupportDetails.SurfaceCapabilities);
+
+	uint32_t imageCount = swapChainSupportDetails.SurfaceCapabilities.minImageCount + 1;
+
+	if (swapChainSupportDetails.SurfaceCapabilities.maxImageCount > 0 && imageCount > swapChainSupportDetails.SurfaceCapabilities.maxImageCount)
+	{
+		imageCount = swapChainSupportDetails.SurfaceCapabilities.maxImageCount;
+	}
+
+	VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+	swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+
+	swapChainCreateInfo.surface = m_VkSurfaceKhr;
+	swapChainCreateInfo.minImageCount = imageCount;
+	swapChainCreateInfo.imageFormat = surfaceFormat.format;
+	swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+	swapChainCreateInfo.imageExtent = extent;
+	swapChainCreateInfo.imageArrayLayers = 1;
+	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; //VK_IMAGE_USAGE_TRANSFER_DST_BIT - For deferred style rendering where everything goes to a buffer first
+
+	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
+	uint32_t queueFamilyIndicies[] = { indices.GraphicsFamily.value(), indices.PresentFamily.value() };
+
+	if (indices.GraphicsFamily != indices.PresentFamily)
+	{
+		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		swapChainCreateInfo.queueFamilyIndexCount = 2;
+		swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicies;
+	}
+	else
+	{
+		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapChainCreateInfo.queueFamilyIndexCount = 0;
+		swapChainCreateInfo.pQueueFamilyIndices = nullptr;
+	}
+
+	swapChainCreateInfo.preTransform = swapChainSupportDetails.SurfaceCapabilities.currentTransform;
+	swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	swapChainCreateInfo.presentMode = presentMode;
+	swapChainCreateInfo.clipped = VK_TRUE;
+	swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: Add support for swap chain recreation (e.g. Window resize!)
+
+	VkResult result = ::vkCreateSwapchainKHR(m_VkDevice, &swapChainCreateInfo, nullptr, &m_VkSwapChainKhr);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create SwapChain!");
+		return false;
+	}
+
+	::vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapChainKhr, &imageCount, nullptr);
+	m_SwapChainImages.resize(imageCount);
+	::vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapChainKhr, &imageCount, m_SwapChainImages.data());
+
+	m_VkSwapChainFormat = surfaceFormat.format;
+	m_VkSwapChainExtent2D = extent;
+
+	return true;
+}
+
+bool VulkanInstance::CreateImageViews()
+{
+	m_SwapChainImageViews.resize(m_SwapChainImages.size());
+
+	for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+	{
+		VkImageViewCreateInfo imageViewCreateInfo = {};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+
+		imageViewCreateInfo.image = m_SwapChainImages[i];
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = m_VkSwapChainFormat;
+
+		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		imageViewCreateInfo.subresourceRange.levelCount = 1;
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		imageViewCreateInfo.subresourceRange.layerCount = 0;
+
+		VkResult result = ::vkCreateImageView(m_VkDevice, &imageViewCreateInfo, nullptr, &m_SwapChainImages[i]);
+
+		if (result != VK_SUCCESS)
+		{
+			::OutputDebugString(L"Failed to create image views!");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool VulkanInstance::CreateGraphicsPipeline()
+{
+	return false;
 }
 
 VkSurfaceFormatKHR VulkanInstance::SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
