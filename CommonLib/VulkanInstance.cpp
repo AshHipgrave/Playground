@@ -2,6 +2,9 @@
 
 #include <sstream>
 #include <set>
+#include <cstdint>
+#include <algorithm>
+#include <cassert>
 
 VulkanInstance::VulkanInstance()
 {
@@ -11,13 +14,15 @@ VulkanInstance::~VulkanInstance()
 {
 	if (m_VkInstance)
 	{
+		::vkDestroySwapchainKHR(m_VkDevice, m_VkSwapChainKhr, nullptr);
+
 		::vkDestroyDevice(m_VkDevice, nullptr);
 
 		if (m_bEnableValidationLayers)
 		{
 			DestroyDebugUtilsMessengerEXT(m_VkInstance, m_VkDebugMessenger, nullptr);
 		}
-		
+
 		::vkDestroySurfaceKHR(m_VkInstance, m_VkSurfaceKhr, nullptr);
 
 		::vkDestroyInstance(m_VkInstance, nullptr);
@@ -60,6 +65,80 @@ bool VulkanInstance::InitVulkan(HWND mainWindowHandle)
 		return false;
 	}
 
+	if (!CreateSwapChain())
+	{
+		::OutputDebugString(L"Failed to create SwapChain!");
+		return false;
+	}
+
+	return true;
+}
+
+bool VulkanInstance::CreateSwapChain()
+{
+	assert(m_VkInstance && m_VkDevice && m_VkSurfaceKhr);
+
+	SwapChainSupportDetails swapChainSupportDetails = QuerySwapChainSupport(m_VkPhysicalDevice);
+
+	VkSurfaceFormatKHR surfaceFormat = SelectSwapSurfaceFormat(swapChainSupportDetails.SurfaceFormats);
+	VkPresentModeKHR presentMode = SelectSwapPresentMode(swapChainSupportDetails.PresentModes);
+	VkExtent2D extent = SelectSwapExtent(swapChainSupportDetails.SurfaceCapabilities);
+
+	uint32_t imageCount = swapChainSupportDetails.SurfaceCapabilities.minImageCount + 1;
+
+	if (swapChainSupportDetails.SurfaceCapabilities.maxImageCount > 0 && imageCount > swapChainSupportDetails.SurfaceCapabilities.maxImageCount)
+	{
+		imageCount = swapChainSupportDetails.SurfaceCapabilities.maxImageCount;
+	}
+
+	VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+	swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+
+	swapChainCreateInfo.surface = m_VkSurfaceKhr;
+	swapChainCreateInfo.minImageCount = imageCount;
+	swapChainCreateInfo.imageFormat = surfaceFormat.format;
+	swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+	swapChainCreateInfo.imageExtent = extent;
+	swapChainCreateInfo.imageArrayLayers = 1;
+	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; //VK_IMAGE_USAGE_TRANSFER_DST_BIT - For deferred style rendering where everything goes to a buffer first
+
+	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
+	uint32_t queueFamilyIndicies[] = { indices.GraphicsFamily.value(), indices.PresentFamily.value() };
+
+	if (indices.GraphicsFamily != indices.PresentFamily)
+	{
+		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		swapChainCreateInfo.queueFamilyIndexCount = 2;
+		swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicies;
+	}
+	else
+	{
+		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapChainCreateInfo.queueFamilyIndexCount = 0;
+		swapChainCreateInfo.pQueueFamilyIndices = nullptr;
+	}
+
+	swapChainCreateInfo.preTransform = swapChainSupportDetails.SurfaceCapabilities.currentTransform;
+	swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	swapChainCreateInfo.presentMode = presentMode;
+	swapChainCreateInfo.clipped = VK_TRUE;
+	swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: Add support for swap chain recreation (e.g. Window resize!)
+
+	VkResult result = ::vkCreateSwapchainKHR(m_VkDevice, &swapChainCreateInfo, nullptr, &m_VkSwapChainKhr);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create SwapChain!");
+		return false;
+	}
+
+	::vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapChainKhr, &imageCount, nullptr);
+	m_SwapChainImages.resize(imageCount);
+	::vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapChainKhr, &imageCount, m_SwapChainImages.data());
+
+	m_VkSwapChainFormat = surfaceFormat.format;
+	m_VkSwapChainExtent2D = extent;
+
 	return true;
 }
 
@@ -87,8 +166,8 @@ bool VulkanInstance::CreateInstance()
 
 	createInfo.pApplicationInfo = &appInfo;
 
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedExtensions.size());
-	createInfo.ppEnabledExtensionNames = m_WantedExtensions.data();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedInstanceExtensions.size());
+	createInfo.ppEnabledExtensionNames = m_WantedInstanceExtensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 
@@ -117,31 +196,20 @@ bool VulkanInstance::CreateInstance()
 	return true;
 }
 
-bool VulkanInstance::HasWantedValidationLayerSupport()
+bool VulkanInstance::CreateSurface()
 {
-	uint32_t layerCount;
-	::vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
+	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 
-	std::vector<VkLayerProperties> availableLayers(layerCount);
-	::vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+	surfaceCreateInfo.hwnd = m_hMainWindowHandle;
+	surfaceCreateInfo.hinstance = ::GetModuleHandle(nullptr);
 
-	for (const char* wantedLayerName : m_WantedValidationLayers)
+	VkResult result = ::vkCreateWin32SurfaceKHR(m_VkInstance, &surfaceCreateInfo, nullptr, &m_VkSurfaceKhr);
+
+	if (result != VK_SUCCESS)
 	{
-		bool layerFound = false;
-
-		for (const auto& availableLayer : availableLayers)
-		{
-			if (strcmp(wantedLayerName, availableLayer.layerName) == 0)
-			{
-				layerFound = true;
-				break;
-			}
-		}
-
-		if (!layerFound)
-		{
-			return false;
-		}
+		::OutputDebugString(L"Failed to create window surface!");
+		return false;
 	}
 
 	return true;
@@ -179,13 +247,6 @@ bool VulkanInstance::CreatePhysicalDevice()
 	return true;
 }
 
-bool VulkanInstance::IsDeviceUsable(VkPhysicalDevice device)
-{
-	QueueFamilyIndices indices = FindQueueFamilies(device);
-
-	return indices.IsComplete();
-}
-
 bool VulkanInstance::CreateLogicalDevice()
 {
 	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
@@ -217,8 +278,8 @@ bool VulkanInstance::CreateLogicalDevice()
 
 	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
-	deviceCreateInfo.enabledExtensionCount = 0; //static_cast<uint32_t>(m_WantedExtensions.size());
-	deviceCreateInfo.ppEnabledExtensionNames = nullptr; //m_WantedExtensions.data();	// TODO: This is causing an exception saying the requested extensions aren't supported :/
+	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedDeviceExtensions.size());
+	deviceCreateInfo.ppEnabledExtensionNames = m_WantedDeviceExtensions.data();
 
 	if (m_bEnableValidationLayers)
 	{
@@ -245,23 +306,144 @@ bool VulkanInstance::CreateLogicalDevice()
 	return true;
 }
 
-bool VulkanInstance::CreateSurface()
+VkSurfaceFormatKHR VulkanInstance::SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
-	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
-	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-
-	surfaceCreateInfo.hwnd = m_hMainWindowHandle;
-	surfaceCreateInfo.hinstance = ::GetModuleHandle(nullptr);
-
-	VkResult result = ::vkCreateWin32SurfaceKHR(m_VkInstance, &surfaceCreateInfo, nullptr, &m_VkSurfaceKhr);
-
-	if (result != VK_SUCCESS)
+	for (const auto& availableFormat : availableFormats)
 	{
-		::OutputDebugString(L"Failed to create window surface!");
-		return false;
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+		{
+			return availableFormat;
+		}
+	}
+
+	return availableFormats[0];
+}
+
+VkPresentModeKHR VulkanInstance::SelectSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+{
+	for (const auto& availablePresentMode : availablePresentModes)
+	{
+		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		{
+			return availablePresentMode;
+		}
+	}
+
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkExtent2D VulkanInstance::SelectSwapExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities)
+{
+	if (surfaceCapabilities.currentExtent.width != UINT32_MAX)
+	{
+		return surfaceCapabilities.currentExtent;
+	}
+	else
+	{
+		RECT windowRect;
+		::GetWindowRect(m_hMainWindowHandle, &windowRect);
+
+		int width = windowRect.right - windowRect.left;
+		int height = windowRect.bottom - windowRect.top;
+
+		VkExtent2D actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+
+		actualExtent.width = std::max(surfaceCapabilities.minImageExtent.width, std::min(surfaceCapabilities.maxImageExtent.width, actualExtent.width));
+		actualExtent.height = std::max(surfaceCapabilities.minImageExtent.height, std::min(surfaceCapabilities.maxImageExtent.height, actualExtent.height));
+
+		return actualExtent;
+	}
+}
+
+bool VulkanInstance::IsDeviceUsable(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices = FindQueueFamilies(device);
+
+	bool extensionsSupported = HasWantedDeviceExtensionSupport(device);
+
+	bool swapChainAdequate = false;
+
+	if (extensionsSupported)
+	{
+		SwapChainSupportDetails swapChainSupportDetails = QuerySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupportDetails.SurfaceFormats.empty() && !swapChainSupportDetails.PresentModes.empty();
+	}
+
+	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+}
+
+bool VulkanInstance::HasWantedValidationLayerSupport()
+{
+	uint32_t layerCount;
+	::vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+	std::vector<VkLayerProperties> availableLayers(layerCount);
+	::vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+	for (const char* wantedLayerName : m_WantedValidationLayers)
+	{
+		bool layerFound = false;
+
+		for (const auto& availableLayer : availableLayers)
+		{
+			if (strcmp(wantedLayerName, availableLayer.layerName) == 0)
+			{
+				layerFound = true;
+				break;
+			}
+		}
+
+		if (!layerFound)
+		{
+			return false;
+		}
 	}
 
 	return true;
+}
+
+bool VulkanInstance::HasWantedDeviceExtensionSupport(VkPhysicalDevice device)
+{
+	uint32_t extensionCount;
+	::vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions(m_WantedDeviceExtensions.begin(), m_WantedDeviceExtensions.end());
+
+	for (const auto& extension : availableExtensions)
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
+SwapChainSupportDetails VulkanInstance::QuerySwapChainSupport(VkPhysicalDevice device)
+{
+	SwapChainSupportDetails details;
+	::vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_VkSurfaceKhr, &details.SurfaceCapabilities);
+
+	uint32_t formatCount;
+	::vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_VkSurfaceKhr, &formatCount, nullptr);
+
+	if (formatCount != 0)
+	{
+		details.SurfaceFormats.resize(formatCount);
+		::vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_VkSurfaceKhr, &formatCount, details.SurfaceFormats.data());
+	}
+
+	uint32_t presentModeCount;
+	::vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_VkSurfaceKhr, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0)
+	{
+		details.PresentModes.resize(presentModeCount);
+		::vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_VkSurfaceKhr, &presentModeCount, details.PresentModes.data());
+	}
+
+	return details;
 }
 
 QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice device)
@@ -300,6 +482,20 @@ QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice device)
 	return supportedIndicies;
 }
 
+bool VulkanInstance::CreateDebugMessenger()
+{
+	if (!m_bEnableValidationLayers) return true;
+
+	VkDebugUtilsMessengerCreateInfoEXT createInfo;
+	InitialiseDebugMessengerCreateInfo(createInfo);
+
+	if (CreateDebugUtilsMessengerEXT(m_VkInstance, &createInfo, nullptr, &m_VkDebugMessenger) != VK_SUCCESS)
+	{
+		return false;
+	}
+	return true;
+}
+
 void VulkanInstance::InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
 	createInfo = {};
@@ -317,20 +513,6 @@ void VulkanInstance::InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCre
 
 	createInfo.pfnUserCallback = DebugCallback;
 	createInfo.pUserData = nullptr;
-}
-
-bool VulkanInstance::CreateDebugMessenger()
-{
-	if (!m_bEnableValidationLayers) return true;
-
-	VkDebugUtilsMessengerCreateInfoEXT createInfo;
-	InitialiseDebugMessengerCreateInfo(createInfo);
-
-	if (CreateDebugUtilsMessengerEXT(m_VkInstance, &createInfo, nullptr, &m_VkDebugMessenger) != VK_SUCCESS)
-	{
-		return false;
-	}
-	return true;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)

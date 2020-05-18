@@ -2,6 +2,14 @@
 
 #define VK_USE_PLATFORM_WIN32_KHR
 
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif // !WIN32_LEAN_AND_MEAN
+
+#ifndef NOMINMAX
+	#define NOMINMAX
+#endif // !NOMINMAX
+
 #include <Windows.h>
 
 #include <vulkan/vk_platform.h>
@@ -22,6 +30,14 @@ struct QueueFamilyIndices
 	}
 };
 
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR SurfaceCapabilities = {};
+
+	std::vector<VkSurfaceFormatKHR> SurfaceFormats;
+	std::vector<VkPresentModeKHR> PresentModes;
+};
+
 class VulkanInstance
 {
 public:
@@ -29,21 +45,30 @@ public:
 	~VulkanInstance();
 
 	bool InitVulkan(HWND mainWindowHandle);
+	bool CreateSwapChain();
 
 private:
 	bool CreateInstance();
 	bool CreateDebugMessenger();
-	bool HasWantedValidationLayerSupport();
+	bool CreateSurface();
 
 	bool CreatePhysicalDevice();
-	bool IsDeviceUsable(VkPhysicalDevice device);
-
 	bool CreateLogicalDevice();
 
-	bool CreateSurface();
+	VkSurfaceFormatKHR SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR SelectSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkExtent2D SelectSwapExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
+
+	bool IsDeviceUsable(VkPhysicalDevice device);
+
+	bool HasWantedValidationLayerSupport();
+	bool HasWantedDeviceExtensionSupport(VkPhysicalDevice device);
+
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
+private:
 	void InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
@@ -57,23 +82,34 @@ private:
 
 	VkInstance m_VkInstance = VK_NULL_HANDLE;
 
-	VkPhysicalDevice m_VkPhysicalDevice = VK_NULL_HANDLE;
-
 	VkDevice m_VkDevice = VK_NULL_HANDLE;
+
+	VkPhysicalDevice m_VkPhysicalDevice = VK_NULL_HANDLE;
 
 	VkQueue m_VkGraphicsQueue = VK_NULL_HANDLE;
 	VkQueue m_VkPresentQueue = VK_NULL_HANDLE;
 	
 	VkSurfaceKHR m_VkSurfaceKhr = VK_NULL_HANDLE;
 
+	VkSwapchainKHR m_VkSwapChainKhr = VK_NULL_HANDLE;
+
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
+
+	std::vector<VkImage> m_SwapChainImages;
+
+	VkFormat m_VkSwapChainFormat;
+	VkExtent2D m_VkSwapChainExtent2D;
 
 private:
 	const std::vector<const char*> m_WantedValidationLayers = {
 		"VK_LAYER_KHRONOS_validation"
 	};
 
-	const std::vector<const char*> m_WantedExtensions = {
+	const std::vector<const char*> m_WantedDeviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+
+	const std::vector<const char*> m_WantedInstanceExtensions = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
 		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #if defined(_DEBUG) || defined(DEBUG)
