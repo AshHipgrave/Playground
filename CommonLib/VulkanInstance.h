@@ -34,6 +34,11 @@ public:
 	~VulkanInstance();
 
 	bool InitVulkan(HWND mainWindowHandle);
+	bool IsInitialised();
+
+	void DrawFrame();
+
+	void RecreateSwapChain();
 
 private:
 	bool CreateInstance();
@@ -45,7 +50,14 @@ private:
 	bool CreateSwapChain();
 
 	bool CreateImageViews();
+	bool CreateRenderPass();
+
 	bool CreateGraphicsPipeline();
+	bool CreateFramebuffers();
+
+	bool CreateCommandPool();
+	bool CreateCommandBuffers();
+	bool CreateSemaphores();
 
 	VkSurfaceFormatKHR SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR SelectSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
@@ -61,6 +73,9 @@ private:
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 private:
+	VkShaderModule CreateShaderModule(const std::vector<char>& bytecode);
+
+private:
 	void InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
@@ -72,10 +87,11 @@ private:
 private:
 	HWND m_hMainWindowHandle  = nullptr;
 
+	bool m_bIsVulkanInitialised = false;
+
 	VkInstance m_VkInstance = VK_NULL_HANDLE;
 
 	VkDevice m_VkDevice = VK_NULL_HANDLE;
-
 	VkPhysicalDevice m_VkPhysicalDevice = VK_NULL_HANDLE;
 
 	VkQueue m_VkGraphicsQueue = VK_NULL_HANDLE;
@@ -84,11 +100,23 @@ private:
 	VkSurfaceKHR m_VkSurfaceKhr = VK_NULL_HANDLE;
 
 	VkSwapchainKHR m_VkSwapChainKhr = VK_NULL_HANDLE;
+	VkRenderPass m_VkRenderPass = VK_NULL_HANDLE;
+
+	VkPipelineLayout m_VkPipelineLayout = VK_NULL_HANDLE;
+	VkPipeline m_VkGraphicsPipeline = VK_NULL_HANDLE;
+
+	VkCommandPool m_VkCommandPool = VK_NULL_HANDLE;
 
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
 
 	std::vector<VkImage> m_SwapChainImages;
 	std::vector<VkImageView> m_SwapChainImageViews;
+
+	std::vector<VkFramebuffer> m_VkFramebuffers;
+	std::vector<VkCommandBuffer> m_VkCommandBuffers;
+
+	VkSemaphore m_ImageAvailableSemaphore;
+	VkSemaphore m_RenderCompleteSemaphore;
 
 	VkFormat m_VkSwapChainFormat;
 	VkExtent2D m_VkSwapChainExtent2D;

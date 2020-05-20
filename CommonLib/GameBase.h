@@ -28,7 +28,7 @@ public:
 	LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 protected:
-	virtual void OnResize() { }
+	virtual void OnResize();
 
 	virtual void Update(const GameTimer& gameTimer) = 0;
 	virtual void Draw(const GameTimer& gameTimer) = 0;
@@ -61,6 +61,6 @@ protected:
 	int m_ClientWindowWidth = 800;
 	int m_ClientWindowHeight = 600;
 
-	std::wstring m_MainWndCaption = L"GameBase MainWindow";
+	std::wstring m_MainWndCaption = L"Sandbox";
 };
 

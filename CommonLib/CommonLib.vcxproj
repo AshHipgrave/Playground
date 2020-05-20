@@ -114,6 +114,10 @@
     <Lib>
       <AdditionalLibraryDirectories>C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\Vulkan-1.2.135.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -133,6 +137,10 @@
     <Lib>
       <AdditionalLibraryDirectories>C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\Vulkan-1.2.135.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -155,6 +163,10 @@
     <Lib>
       <AdditionalLibraryDirectories>C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\Vulkan-1.2.135.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -177,6 +189,10 @@
     <Lib>
       <AdditionalLibraryDirectories>C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\Vulkan-1.2.135.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GameBase.cpp" />

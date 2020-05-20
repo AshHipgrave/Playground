@@ -32,9 +32,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR cmdLine, i
 bool PlaygroundGameApp::Initialise()
 {
 	if (!GameBase::Initialise())
-	{
 		return false;
-	}
 	
 	// TODO: Additional Init logic here.
 
@@ -53,5 +51,10 @@ void PlaygroundGameApp::Update(const GameTimer& gameTimer)
 
 void PlaygroundGameApp::Draw(const GameTimer& gameTimer)
 {
+	if (m_VulkanInstance.IsInitialised())
+	{
+		m_VulkanInstance.DrawFrame();
+	}
+
 	//TODO: Draw logic here.
 }

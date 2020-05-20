@@ -37,10 +37,10 @@ int GameBase::Run()
 
 	while (msg.message != WM_QUIT)
 	{
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
 		}
 		else
 		{
@@ -217,6 +217,14 @@ LRESULT GameBase::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+void GameBase::OnResize()
+{
+	if (m_VulkanInstance.IsInitialised())
+	{
+		m_VulkanInstance.RecreateSwapChain();
+	}
+}
+
 bool GameBase::InitMainWindow()
 {
 	WNDCLASS windowClass;
@@ -233,7 +241,7 @@ bool GameBase::InitMainWindow()
 
 	if (!::RegisterClass(&windowClass))
 	{
-		::MessageBox(0, L"Failed to register WindowClass", 0, 0);
+		::MessageBox(0, L"Failed to register WindowClass", 0, MB_ICONERROR);
 		return false;
 	}
 
@@ -248,7 +256,7 @@ bool GameBase::InitMainWindow()
 
 	if (!m_hMainWindowHandle)
 	{
-		::MessageBox(0, L"Failed to create main window", 0, 0);
+		::MessageBox(0, L"Failed to create main window", 0, MB_ICONERROR);
 		return false;
 	}
 
@@ -260,14 +268,13 @@ bool GameBase::InitMainWindow()
 
 bool GameBase::InitGraphics()
 {
-	// if (Graphics.Vulkan()) {
+	assert(!m_VulkanInstance.IsInitialised());
+
 	if (!m_VulkanInstance.InitVulkan(m_hMainWindowHandle))
 	{
-		::MessageBox(0, L"Failed to create Vulkan instance!", 0, 0);
+		::MessageBox(0, L"Failed to create Vulkan instance!", 0, MB_ICONERROR);
 		return false;
 	}
-	// } else if (Graphics.DX12) { InitDX12 }
-	// else if (Graphics.<API>) { Init<InsertApiHere> } ...
 
 	return true;
 }

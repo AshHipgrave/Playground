@@ -8,6 +8,21 @@ VulkanInstance::~VulkanInstance()
 {
 	if (m_VkInstance)
 	{
+		::vkDestroySemaphore(m_VkDevice, m_RenderCompleteSemaphore, nullptr);
+		::vkDestroySemaphore(m_VkDevice, m_ImageAvailableSemaphore, nullptr);
+
+		::vkDestroyCommandPool(m_VkDevice, m_VkCommandPool, nullptr);
+
+		for (auto framebuffer : m_VkFramebuffers)
+		{
+			::vkDestroyFramebuffer(m_VkDevice, framebuffer, nullptr);
+		}
+
+		::vkDestroyPipeline(m_VkDevice, m_VkGraphicsPipeline, nullptr);
+		::vkDestroyPipelineLayout(m_VkDevice, m_VkPipelineLayout, nullptr);
+
+		::vkDestroyRenderPass(m_VkDevice, m_VkRenderPass, nullptr);
+
 		for (auto imageView : m_SwapChainImageViews)
 		{
 			::vkDestroyImageView(m_VkDevice, imageView, nullptr);
@@ -55,10 +70,90 @@ bool VulkanInstance::InitVulkan(HWND mainWindowHandle)
 	if (!CreateImageViews())
 		return false;
 
+	if (!CreateRenderPass())
+		return false;
+
 	if (!CreateGraphicsPipeline())
 		return false;
 
+	if (!CreateFramebuffers())
+		return false;
+
+	if (!CreateCommandPool())
+		return false;
+
+	if (!CreateCommandBuffers())
+		return false;
+
+	if (!CreateSemaphores())
+		return false;
+
+	m_bIsVulkanInitialised = true;
+
 	return true;
+}
+
+bool VulkanInstance::IsInitialised()
+{
+	return m_bIsVulkanInitialised;
+}
+
+void VulkanInstance::DrawFrame()
+{
+	uint32_t imageIndex = -1;
+	::vkAcquireNextImageKHR(m_VkDevice, m_VkSwapChainKhr, UINT64_MAX, m_ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { m_ImageAvailableSemaphore };
+	VkPipelineStageFlags waitStageFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStageFlags;
+	
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &m_VkCommandBuffers[imageIndex];
+
+	VkSemaphore signalSemaphores[] = { m_RenderCompleteSemaphore };
+
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	if (::vkQueueSubmit(m_VkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to submit draw command!");
+	}
+
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = { m_VkSwapChainKhr };
+
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pResults = nullptr;
+
+	::vkQueuePresentKHR(m_VkPresentQueue, &presentInfo);
+}
+
+void VulkanInstance::RecreateSwapChain()
+{
+	if (!m_bIsVulkanInitialised)
+		return;
+
+	CreateSwapChain();
+	CreateImageViews();
+
+	CreateRenderPass();
+	CreateGraphicsPipeline();
+
+	CreateFramebuffers();
+	CreateCommandBuffers();
 }
 
 bool VulkanInstance::CreateInstance()
@@ -315,9 +410,9 @@ bool VulkanInstance::CreateImageViews()
 		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 		imageViewCreateInfo.subresourceRange.levelCount = 1;
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-		imageViewCreateInfo.subresourceRange.layerCount = 0;
+		imageViewCreateInfo.subresourceRange.layerCount = 1;
 
-		VkResult result = ::vkCreateImageView(m_VkDevice, &imageViewCreateInfo, nullptr, &m_SwapChainImages[i]);
+		VkResult result = ::vkCreateImageView(m_VkDevice, &imageViewCreateInfo, nullptr, &m_SwapChainImageViews[i]);
 
 		if (result != VK_SUCCESS)
 		{
@@ -329,9 +424,328 @@ bool VulkanInstance::CreateImageViews()
 	return true;
 }
 
+bool VulkanInstance::CreateRenderPass()
+{
+	VkAttachmentDescription attachmentDescription = {};
+	attachmentDescription.format = m_VkSwapChainFormat;
+	attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	
+	attachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+	attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference attachmentReference = {};
+	attachmentReference.attachment = 0;
+	attachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpassDescription = {};
+	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDescription.colorAttachmentCount = 1;
+	subpassDescription.pColorAttachments = &attachmentReference;
+
+	VkSubpassDependency subpassDependency = {};
+	subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpassDependency.dstSubpass = 0;
+	subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpassDependency.srcAccessMask = 0;
+	subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkRenderPassCreateInfo renderPassCreateInfo = {};
+	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassCreateInfo.attachmentCount = 1;
+	renderPassCreateInfo.pAttachments = &attachmentDescription;
+	renderPassCreateInfo.subpassCount = 1;
+	renderPassCreateInfo.pSubpasses = &subpassDescription;
+	renderPassCreateInfo.dependencyCount = 1;
+	renderPassCreateInfo.pDependencies = &subpassDependency;
+
+	VkResult result = ::vkCreateRenderPass(m_VkDevice, &renderPassCreateInfo, nullptr, &m_VkRenderPass);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create RenderPass");
+		return false;
+	}
+
+	return true;
+}
+
 bool VulkanInstance::CreateGraphicsPipeline()
 {
-	return false;
+	auto vertexShaderBytecode = ReadFileAsBinary("vert.spv");
+	auto fragmentShaderBytecode = ReadFileAsBinary("frag.spv");
+
+	VkShaderModule vertexShaderModule = CreateShaderModule(vertexShaderBytecode);
+	VkShaderModule fragmentShaderModule = CreateShaderModule(fragmentShaderBytecode);
+
+	VkPipelineShaderStageCreateInfo vertexShaderStageCreateInfo = {};
+	vertexShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertexShaderStageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertexShaderStageCreateInfo.module = vertexShaderModule;
+	vertexShaderStageCreateInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo fragmentShaderStageCreateInfo = {};
+	fragmentShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragmentShaderStageCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragmentShaderStageCreateInfo.module = fragmentShaderModule;
+	fragmentShaderStageCreateInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageCreateInfo, fragmentShaderStageCreateInfo };
+
+	VkPipelineVertexInputStateCreateInfo  vertexInputStageCreateInfo = {};
+	vertexInputStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputStageCreateInfo.vertexBindingDescriptionCount = 0;
+	vertexInputStageCreateInfo.vertexAttributeDescriptionCount = 0;
+	vertexInputStageCreateInfo.pVertexBindingDescriptions = nullptr;
+	vertexInputStageCreateInfo.pVertexAttributeDescriptions = nullptr;
+
+	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStageCreateInfo = {};
+	inputAssemblyStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssemblyStageCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssemblyStageCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+	VkViewport viewport = {};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)m_VkSwapChainExtent2D.width;
+	viewport.height = (float)m_VkSwapChainExtent2D.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissorRect = {};
+	scissorRect.offset = { 0, 0 };
+	scissorRect.extent = m_VkSwapChainExtent2D;
+
+	VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {};
+	viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportStateCreateInfo.viewportCount = 1;
+	viewportStateCreateInfo.pViewports = &viewport;
+	viewportStateCreateInfo.scissorCount = 1;
+	viewportStateCreateInfo.pScissors = &scissorRect;
+
+	VkPipelineRasterizationStateCreateInfo rasterizerStageCreateInfo = {};
+	rasterizerStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizerStageCreateInfo.depthClampEnable = VK_FALSE;
+	rasterizerStageCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+	rasterizerStageCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizerStageCreateInfo.lineWidth = 1.0f;
+	rasterizerStageCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizerStageCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizerStageCreateInfo.depthBiasEnable = VK_FALSE;
+	rasterizerStageCreateInfo.depthBiasConstantFactor = 0.0f;
+	rasterizerStageCreateInfo.depthBiasClamp = 0.0f;
+	rasterizerStageCreateInfo.depthBiasSlopeFactor = 0.0f;
+
+	VkPipelineMultisampleStateCreateInfo multisamplingStateCreateInfo = {};
+	multisamplingStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisamplingStateCreateInfo.sampleShadingEnable = VK_FALSE;
+	multisamplingStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisamplingStateCreateInfo.minSampleShading = 1.0f;
+	multisamplingStateCreateInfo.pSampleMask = nullptr;
+	multisamplingStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
+	multisamplingStateCreateInfo.alphaToOneEnable = VK_FALSE;
+
+	VkPipelineColorBlendAttachmentState colourBlendAttachmentStateCreateInfo = {};
+	colourBlendAttachmentStateCreateInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colourBlendAttachmentStateCreateInfo.blendEnable = VK_FALSE;
+	colourBlendAttachmentStateCreateInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	colourBlendAttachmentStateCreateInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colourBlendAttachmentStateCreateInfo.colorBlendOp = VK_BLEND_OP_ADD;
+	colourBlendAttachmentStateCreateInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colourBlendAttachmentStateCreateInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colourBlendAttachmentStateCreateInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	VkPipelineColorBlendStateCreateInfo colourBlendStateCreateInfo = {};
+	colourBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	colourBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+	colourBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+	colourBlendStateCreateInfo.attachmentCount = 1;
+	colourBlendStateCreateInfo.pAttachments = &colourBlendAttachmentStateCreateInfo;
+	colourBlendStateCreateInfo.blendConstants[0] = 0.0f;
+	colourBlendStateCreateInfo.blendConstants[1] = 0.0f;
+	colourBlendStateCreateInfo.blendConstants[2] = 0.0f;
+	colourBlendStateCreateInfo.blendConstants[3] = 0.0f;
+
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutCreateInfo.setLayoutCount = 0;
+	pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+	VkResult result = ::vkCreatePipelineLayout(m_VkDevice, &pipelineLayoutCreateInfo, nullptr, &m_VkPipelineLayout);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create pipeline layout!");
+		return false;
+	}
+
+	VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {};
+	graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	graphicsPipelineCreateInfo.stageCount = 2;
+	graphicsPipelineCreateInfo.pStages = shaderStages;
+	graphicsPipelineCreateInfo.pVertexInputState = &vertexInputStageCreateInfo;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyStageCreateInfo;
+	graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
+	graphicsPipelineCreateInfo.pRasterizationState = &rasterizerStageCreateInfo;
+	graphicsPipelineCreateInfo.pMultisampleState = &multisamplingStateCreateInfo;
+	graphicsPipelineCreateInfo.pDepthStencilState = nullptr;
+	graphicsPipelineCreateInfo.pColorBlendState = &colourBlendStateCreateInfo;
+	graphicsPipelineCreateInfo.pDynamicState = nullptr;
+	graphicsPipelineCreateInfo.layout = m_VkPipelineLayout;
+	graphicsPipelineCreateInfo.renderPass = m_VkRenderPass;
+	graphicsPipelineCreateInfo.subpass = 0;
+	graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+	graphicsPipelineCreateInfo.basePipelineIndex = -1;
+
+	result = ::vkCreateGraphicsPipelines(m_VkDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_VkGraphicsPipeline);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create Graphics Pipeline!");
+		return false;
+	}
+
+	::vkDestroyShaderModule(m_VkDevice, fragmentShaderModule, nullptr);
+	::vkDestroyShaderModule(m_VkDevice, vertexShaderModule, nullptr);
+
+	return true;
+}
+
+bool VulkanInstance::CreateFramebuffers()
+{
+	m_VkFramebuffers.resize(m_SwapChainImageViews.size());
+
+	VkResult result = VK_NOT_READY;
+
+	for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+	{
+		VkImageView attachments[] = {
+			m_SwapChainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo framebufferCreateInfo = {};
+		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferCreateInfo.renderPass = m_VkRenderPass;
+		framebufferCreateInfo.attachmentCount = 1;
+		framebufferCreateInfo.pAttachments = attachments;
+		framebufferCreateInfo.width = m_VkSwapChainExtent2D.width;
+		framebufferCreateInfo.height = m_VkSwapChainExtent2D.height;
+		framebufferCreateInfo.layers = 1;
+
+		result = ::vkCreateFramebuffer(m_VkDevice, &framebufferCreateInfo, nullptr, &m_VkFramebuffers[i]);
+
+		if (result != VK_SUCCESS)
+		{
+			::OutputDebugString(L"Failed to create SwapChain Framebuffer!");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool VulkanInstance::CreateCommandPool()
+{
+	QueueFamilyIndices queueFamilyInidices = FindQueueFamilies(m_VkPhysicalDevice);
+
+	VkCommandPoolCreateInfo commandPoolCreateInfo = {};
+	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	commandPoolCreateInfo.queueFamilyIndex = queueFamilyInidices.GraphicsFamily.value();
+	commandPoolCreateInfo.flags = 0;
+
+	VkResult result = ::vkCreateCommandPool(m_VkDevice, &commandPoolCreateInfo, nullptr, &m_VkCommandPool);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create CommandPool!");
+		return false;
+	}
+
+	return true;
+}
+
+bool VulkanInstance::CreateCommandBuffers()
+{
+	m_VkCommandBuffers.resize(m_VkFramebuffers.size());
+
+	VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
+	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	commandBufferAllocateInfo.commandPool = m_VkCommandPool;
+	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	commandBufferAllocateInfo.commandBufferCount = (uint32_t)m_VkCommandBuffers.size();
+
+	VkResult result = ::vkAllocateCommandBuffers(m_VkDevice, &commandBufferAllocateInfo, m_VkCommandBuffers.data());
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to allocate Command Buffers!");
+		return false;
+	}
+
+	for (size_t i = 0; i < m_VkCommandBuffers.size(); i++)
+	{
+		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
+		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		commandBufferBeginInfo.flags = 0;
+		commandBufferBeginInfo.pInheritanceInfo = nullptr;
+
+		result = ::vkBeginCommandBuffer(m_VkCommandBuffers[i], &commandBufferBeginInfo);
+
+		if (result != VK_SUCCESS)
+		{
+			::OutputDebugString(L"Failed to begin recording command buffer!");
+			return false;
+		}
+
+		VkClearValue clearColour = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+		VkRenderPassBeginInfo renderPassBeginInfo = {};
+		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassBeginInfo.renderPass = m_VkRenderPass;
+		renderPassBeginInfo.framebuffer = m_VkFramebuffers[i];
+		renderPassBeginInfo.renderArea.offset = { 0, 0 };
+		renderPassBeginInfo.renderArea.extent = m_VkSwapChainExtent2D;
+		renderPassBeginInfo.clearValueCount = 1;
+		renderPassBeginInfo.pClearValues = &clearColour;
+
+		::vkCmdBeginRenderPass(m_VkCommandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		::vkCmdBindPipeline(m_VkCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_VkGraphicsPipeline);
+		::vkCmdDraw(m_VkCommandBuffers[i], 3, 1, 0, 0);
+		::vkCmdEndRenderPass(m_VkCommandBuffers[i]);
+
+		result = ::vkEndCommandBuffer(m_VkCommandBuffers[i]);
+
+		if (result != VK_SUCCESS)
+		{
+			::OutputDebugString(L"Failed to record Command Buffer!");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool VulkanInstance::CreateSemaphores()
+{
+	VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	
+	if (::vkCreateSemaphore(m_VkDevice, &semaphoreCreateInfo, nullptr, &m_ImageAvailableSemaphore) != VK_SUCCESS ||
+		::vkCreateSemaphore(m_VkDevice, &semaphoreCreateInfo, nullptr, &m_RenderCompleteSemaphore) != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create Semaphores!");
+		return false;
+	}
+
+	return true;
 }
 
 VkSurfaceFormatKHR VulkanInstance::SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -510,6 +924,27 @@ QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice device)
 	return supportedIndicies;
 }
 
+VkShaderModule VulkanInstance::CreateShaderModule(const std::vector<char>& bytecode)
+{
+	VkShaderModuleCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+
+	createInfo.codeSize = bytecode.size();
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(bytecode.data());
+
+	VkShaderModule shaderModule = nullptr;
+
+	VkResult result = ::vkCreateShaderModule(m_VkDevice, &createInfo, nullptr, &shaderModule);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create shader module!");
+		return nullptr;
+	}
+
+	return shaderModule;
+}
+
 bool VulkanInstance::CreateDebugMessenger()
 {
 	if (!m_bEnableValidationLayers) return true;
@@ -524,23 +959,23 @@ bool VulkanInstance::CreateDebugMessenger()
 	return true;
 }
 
-void VulkanInstance::InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+void VulkanInstance::InitialiseDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugUtilsMessengerCreateInfo)
 {
-	createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	debugUtilsMessengerCreateInfo = {};
+	debugUtilsMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 
-	createInfo.messageSeverity =
+	debugUtilsMessengerCreateInfo.messageSeverity =
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
-	createInfo.messageType =
+	debugUtilsMessengerCreateInfo.messageType =
 		VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
-	createInfo.pfnUserCallback = DebugCallback;
-	createInfo.pUserData = nullptr;
+	debugUtilsMessengerCreateInfo.pfnUserCallback = DebugCallback;
+	debugUtilsMessengerCreateInfo.pUserData = nullptr;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
