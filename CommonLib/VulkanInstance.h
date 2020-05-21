@@ -27,6 +27,8 @@ struct SwapChainSupportDetails
 	std::vector<VkPresentModeKHR> PresentModes;
 };
 
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
 class VulkanInstance
 {
 public:
@@ -41,6 +43,8 @@ public:
 	void RecreateSwapChain();
 
 private:
+	void CleanupSwapChain();
+
 	bool CreateInstance();
 	bool CreateDebugMessenger();
 	bool CreateSurface();
@@ -57,7 +61,7 @@ private:
 
 	bool CreateCommandPool();
 	bool CreateCommandBuffers();
-	bool CreateSemaphores();
+	bool CreateSyncObjects();
 
 	VkSurfaceFormatKHR SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR SelectSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
@@ -89,6 +93,8 @@ private:
 
 	bool m_bIsVulkanInitialised = false;
 
+	size_t m_CurrentFrameIdx = 0;
+
 	VkInstance m_VkInstance = VK_NULL_HANDLE;
 
 	VkDevice m_VkDevice = VK_NULL_HANDLE;
@@ -115,8 +121,11 @@ private:
 	std::vector<VkFramebuffer> m_VkFramebuffers;
 	std::vector<VkCommandBuffer> m_VkCommandBuffers;
 
-	VkSemaphore m_ImageAvailableSemaphore;
-	VkSemaphore m_RenderCompleteSemaphore;
+	std::vector<VkFence> m_InFlightFences;
+	std::vector<VkFence> m_ImagesInFlight;
+
+	std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+	std::vector<VkSemaphore> m_RenderCompleteSemaphores;
 
 	VkFormat m_VkSwapChainFormat;
 	VkExtent2D m_VkSwapChainExtent2D;
