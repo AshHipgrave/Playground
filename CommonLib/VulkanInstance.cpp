@@ -10,6 +10,8 @@ VulkanInstance::~VulkanInstance()
 	{
 		::vkDeviceWaitIdle(m_VkDevice);
 
+		CleanupSwapChain();
+
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			::vkDestroySemaphore(m_VkDevice, m_RenderCompleteSemaphores[i], nullptr);
@@ -19,23 +21,6 @@ VulkanInstance::~VulkanInstance()
 		}
 
 		::vkDestroyCommandPool(m_VkDevice, m_VkCommandPool, nullptr);
-
-		for (auto framebuffer : m_VkFramebuffers)
-		{
-			::vkDestroyFramebuffer(m_VkDevice, framebuffer, nullptr);
-		}
-
-		::vkDestroyPipeline(m_VkDevice, m_VkGraphicsPipeline, nullptr);
-		::vkDestroyPipelineLayout(m_VkDevice, m_VkPipelineLayout, nullptr);
-
-		::vkDestroyRenderPass(m_VkDevice, m_VkRenderPass, nullptr);
-
-		for (auto imageView : m_SwapChainImageViews)
-		{
-			::vkDestroyImageView(m_VkDevice, imageView, nullptr);
-		}
-
-		::vkDestroySwapchainKHR(m_VkDevice, m_VkSwapChainKhr, nullptr);
 
 		::vkDestroyDevice(m_VkDevice, nullptr);
 
@@ -108,12 +93,11 @@ bool VulkanInstance::IsInitialised()
 void VulkanInstance::DrawFrame()
 {
 	::vkWaitForFences(m_VkDevice, 1, &m_InFlightFences[m_CurrentFrameIdx], VK_TRUE, UINT64_MAX);
-	::vkResetFences(m_VkDevice, 1, &m_InFlightFences[m_CurrentFrameIdx]);
 
 	uint32_t imageIndex;
 	VkResult result = ::vkAcquireNextImageKHR(m_VkDevice, m_VkSwapChainKhr, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrameIdx], VK_NULL_HANDLE, &imageIndex);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		RecreateSwapChain();
 		return;
@@ -127,6 +111,7 @@ void VulkanInstance::DrawFrame()
 	{
 		::vkWaitForFences(m_VkDevice, 1, &m_ImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
 	}
+
 	m_ImagesInFlight[imageIndex] = m_InFlightFences[m_CurrentFrameIdx];
 
 	VkSubmitInfo submitInfo = {};
@@ -138,7 +123,7 @@ void VulkanInstance::DrawFrame()
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStageFlags;
-	
+
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &m_VkCommandBuffers[imageIndex];
 
@@ -166,10 +151,18 @@ void VulkanInstance::DrawFrame()
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 
-	::vkQueuePresentKHR(m_VkPresentQueue, &presentInfo);
-	::vkQueueWaitIdle(m_VkPresentQueue);
+	result = ::vkQueuePresentKHR(m_VkPresentQueue, &presentInfo);
 
-	m_CurrentFrameIdx = (m_CurrentFrameIdx + 1) % MAX_FRAMES_IN_FLIGHT;
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
+		RecreateSwapChain();
+	}
+	else if (result != VK_SUCCESS)
+	{
+		throw std::exception("Failed to present swap image!");
+	}
+
+	::vkDeviceWaitIdle(m_VkDevice);
 }
 
 void VulkanInstance::RecreateSwapChain()
@@ -180,6 +173,7 @@ void VulkanInstance::RecreateSwapChain()
 	::vkDeviceWaitIdle(m_VkDevice);
 
 	CleanupSwapChain();
+
 	CreateSwapChain();
 	CreateImageViews();
 
@@ -220,44 +214,41 @@ bool VulkanInstance::CreateInstance()
 		return false;
 	}
 
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	VkApplicationInfo appInfo =
+	{
+		VK_STRUCTURE_TYPE_APPLICATION_INFO,
+		nullptr,
+		"PlaygroundGameApp",
+		VK_MAKE_VERSION(1, 0, 0),
+		"No Engine",
+		VK_MAKE_VERSION(1, 0, 0),
+		VK_API_VERSION_1_2
+	};
 
-	appInfo.pApplicationName = "PlaygroundGameApp";
-	appInfo.pEngineName = "No Engine";
-
-	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-
-	appInfo.apiVersion = VK_API_VERSION_1_2;
-
-	VkInstanceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-
-	createInfo.pApplicationInfo = &appInfo;
-
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedInstanceExtensions.size());
-	createInfo.ppEnabledExtensionNames = m_WantedInstanceExtensions.data();
+	VkInstanceCreateInfo instanceCreateInfo =
+	{
+		VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+		nullptr,
+		0,
+		&appInfo,
+		0,
+		nullptr,
+		static_cast<uint32_t>(m_WantedInstanceExtensions.size()),
+		m_WantedInstanceExtensions.data()
+	};
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 
 	if (m_bEnableValidationLayers)
 	{
-		createInfo.enabledLayerCount = static_cast<uint32_t>(m_WantedValidationLayers.size());
-		createInfo.ppEnabledLayerNames = m_WantedValidationLayers.data();
+		instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_WantedValidationLayers.size());
+		instanceCreateInfo.ppEnabledLayerNames = m_WantedValidationLayers.data();
 
 		InitialiseDebugMessengerCreateInfo(debugCreateInfo);
-		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
-	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
-		createInfo.pNext = nullptr;
+		instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
 
-	VkResult result = ::vkCreateInstance(&createInfo, nullptr, &m_VkInstance);
-
-	if (result != VK_SUCCESS)
+	if (::vkCreateInstance(&instanceCreateInfo, nullptr, &m_VkInstance) != VK_SUCCESS)
 	{
 		::OutputDebugString(L"Error: Failed to create Vulkan instance!");
 		return false;
@@ -268,15 +259,16 @@ bool VulkanInstance::CreateInstance()
 
 bool VulkanInstance::CreateSurface()
 {
-	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
-	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
+	{
+		VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+		nullptr,
+		0,
+		::GetModuleHandle(nullptr),
+		m_hMainWindowHandle
+	};
 
-	surfaceCreateInfo.hwnd = m_hMainWindowHandle;
-	surfaceCreateInfo.hinstance = ::GetModuleHandle(nullptr);
-
-	VkResult result = ::vkCreateWin32SurfaceKHR(m_VkInstance, &surfaceCreateInfo, nullptr, &m_VkSurfaceKhr);
-
-	if (result != VK_SUCCESS)
+	if (::vkCreateWin32SurfaceKHR(m_VkInstance, &surfaceCreateInfo, nullptr, &m_VkSurfaceKhr) != VK_SUCCESS)
 	{
 		::OutputDebugString(L"Failed to create window surface!");
 		return false;
@@ -320,57 +312,53 @@ bool VulkanInstance::CreatePhysicalDevice()
 bool VulkanInstance::CreateLogicalDevice()
 {
 	QueueFamilyIndices indices = FindQueueFamilies(m_VkPhysicalDevice);
-
-	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = { indices.GraphicsFamily.value(), indices.PresentFamily.value() };
 
-	const float queuePriority = 1.0f;
+	std::vector<float> queuePriorities = { 1.0f };
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
 	for (uint32_t queueFamily : uniqueQueueFamilies)
 	{
-		VkDeviceQueueCreateInfo queueCreateInfo = {};
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		VkDeviceQueueCreateInfo queueCreateInfo =
+		{
+			VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+			nullptr,
+			0,
+			queueFamily,
+			1,
+			&queuePriorities[0]
+		};
 
-		queueCreateInfo.queueFamilyIndex = queueFamily;
-		queueCreateInfo.queueCount = 1;
-
-		queueCreateInfo.pQueuePriorities = &queuePriority;
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures = {}; // TODO
-
-	VkDeviceCreateInfo deviceCreateInfo = {};
-	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-	deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-	deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-
-	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-
-	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(m_WantedDeviceExtensions.size());
-	deviceCreateInfo.ppEnabledExtensionNames = m_WantedDeviceExtensions.data();
+	VkDeviceCreateInfo deviceCreateInfo =
+	{
+		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		nullptr,
+		0,
+		static_cast<uint32_t>(queueCreateInfos.size()),
+		queueCreateInfos.data(),
+		0,
+		nullptr,
+		static_cast<uint32_t>(m_WantedDeviceExtensions.size()),
+		m_WantedDeviceExtensions.data(),
+		nullptr
+	};
 
 	if (m_bEnableValidationLayers)
 	{
 		deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_WantedValidationLayers.size());
 		deviceCreateInfo.ppEnabledLayerNames = m_WantedValidationLayers.data();
 	}
-	else
-	{
-		deviceCreateInfo.enabledLayerCount = 0;
-		deviceCreateInfo.ppEnabledLayerNames = nullptr;
-	}
 
-	VkResult result = ::vkCreateDevice(m_VkPhysicalDevice, &deviceCreateInfo, nullptr, &m_VkDevice);
-
-	if (result != VK_SUCCESS)
+	if (::vkCreateDevice(m_VkPhysicalDevice, &deviceCreateInfo, nullptr, &m_VkDevice) != VK_SUCCESS)
 	{
 		::OutputDebugString(L"Failed to create logic device!");
 		return false;
 	}
 
-	::vkGetDeviceQueue(m_VkDevice, indices.GraphicsFamily.value(), 0, &m_VkGraphicsQueue); 
+	::vkGetDeviceQueue(m_VkDevice, indices.GraphicsFamily.value(), 0, &m_VkGraphicsQueue);
 	::vkGetDeviceQueue(m_VkDevice, indices.PresentFamily.value(), 0, &m_VkPresentQueue);
 
 	return true;
@@ -485,7 +473,7 @@ bool VulkanInstance::CreateRenderPass()
 	VkAttachmentDescription attachmentDescription = {};
 	attachmentDescription.format = m_VkSwapChainFormat;
 	attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-	
+
 	attachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
@@ -803,7 +791,7 @@ bool VulkanInstance::CreateSyncObjects()
 	VkFenceCreateInfo fenceCreateInfo = {};
 	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-	
+
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		if (::vkCreateSemaphore(m_VkDevice, &semaphoreCreateInfo, nullptr, &m_ImageAvailableSemaphores[i]) != VK_SUCCESS ||
@@ -985,7 +973,7 @@ QueueFamilyIndices VulkanInstance::FindQueueFamilies(VkPhysicalDevice device)
 			supportedIndicies.GraphicsFamily = idx;
 		}
 
-		if (supportedIndicies.IsComplete()) 
+		if (supportedIndicies.IsComplete())
 			break;
 
 		idx++;
