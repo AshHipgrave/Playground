@@ -8,6 +8,9 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_win32.h>
 
+#include "../ThirdParty/imgui-1.76/imgui_impl_win32.h"
+#include "../ThirdParty/imgui-1.76/imgui_impl_vulkan.h"
+
 struct QueueFamilyIndices
 {
 	std::optional<uint32_t> GraphicsFamily;
@@ -62,6 +65,8 @@ private:
 	bool CreateCommandPool();
 	bool CreateCommandBuffers();
 	bool CreateSyncObjects();
+
+	bool InitDearImGui(HWND mainWindowHandle);
 
 	VkSurfaceFormatKHR SelectSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR SelectSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

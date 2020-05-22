@@ -80,6 +80,9 @@ bool VulkanInstance::InitVulkan(HWND mainWindowHandle)
 	if (!CreateSyncObjects())
 		return false;
 
+	if (!InitDearImGui(mainWindowHandle))
+		return false;
+
 	m_bIsVulkanInitialised = true;
 
 	return true;
@@ -801,6 +804,73 @@ bool VulkanInstance::CreateSyncObjects()
 			::OutputDebugString(L"Failed to create sync objects!");
 			return false;
 		}
+	}
+
+	return true;
+}
+
+bool VulkanInstance::InitDearImGui(HWND mainWindowHandle)
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+
+	QueueFamilyIndices queueFamilyInidices = FindQueueFamilies(m_VkPhysicalDevice);
+
+	VkDescriptorPool imGuiDescriptorPool = VK_NULL_HANDLE;
+
+	VkDescriptorPoolSize descriptorPoolSizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+	};
+
+	VkDescriptorPoolCreateInfo createDescriptorPoolInfo = {};
+	createDescriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	createDescriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	createDescriptorPoolInfo.maxSets = 1000 * IM_ARRAYSIZE(descriptorPoolSizes);
+	createDescriptorPoolInfo.poolSizeCount = (uint32_t)IM_ARRAYSIZE(descriptorPoolSizes);
+	createDescriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
+
+	VkResult result = ::vkCreateDescriptorPool(m_VkDevice, &createDescriptorPoolInfo, nullptr, &imGuiDescriptorPool);
+
+	if (result != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to create ImGUI Descriptor Pool");
+		return false;
+	}
+
+	ImGui_ImplVulkan_InitInfo initDearImGuiVulkan = {};
+	initDearImGuiVulkan.Instance = m_VkInstance;
+	initDearImGuiVulkan.PhysicalDevice = m_VkPhysicalDevice;
+	initDearImGuiVulkan.Device = m_VkDevice;
+	initDearImGuiVulkan.QueueFamily = queueFamilyInidices.GraphicsFamily.value();
+	initDearImGuiVulkan.Queue = m_VkGraphicsQueue;
+	initDearImGuiVulkan.PipelineCache = VK_NULL_HANDLE;
+	initDearImGuiVulkan.DescriptorPool = imGuiDescriptorPool;
+	initDearImGuiVulkan.MinImageCount = static_cast<uint32_t>(m_SwapChainImages.size());
+	initDearImGuiVulkan.ImageCount = static_cast<uint32_t>(m_SwapChainImages.size());;
+	initDearImGuiVulkan.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+	if (!::ImGui_ImplVulkan_Init(&initDearImGuiVulkan, m_VkRenderPass))
+	{
+		::OutputDebugString(L"Failed to init Dear ImGui VK Impl");
+		return false;
+	}
+
+	if (!::ImGui_ImplWin32_Init(&mainWindowHandle))
+	{
+		::OutputDebugString(L"Failed to init Dear ImGui Win32 Impl");
+		return false;
 	}
 
 	return true;
