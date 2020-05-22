@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Windows.h>
+#include "PlaygroundCommon.h"
 
 class GameTimer
 {

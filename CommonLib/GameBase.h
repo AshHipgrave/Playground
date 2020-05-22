@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pch.h"
+#include "PlaygroundCommon.h"
 
 #include "GameTimer.h"
 #include "VulkanInstance.h"
