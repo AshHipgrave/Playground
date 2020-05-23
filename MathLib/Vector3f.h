@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ostream>
+#include "MathCommon.h"
 
 class Vector3f
 {
@@ -207,7 +207,7 @@ public:
 	}
 };
 
-std::ostream& operator<<(std::ostream& outputStream, const Vector3f& vector3)
+inline std::ostream& operator<<(std::ostream& outputStream, const Vector3f& vector)
 {
-	return outputStream << vector3.X << ", " << vector3.Y << ", " << vector3.Z;
+	return outputStream << vector.X << ", " << vector.Y << ", " << vector.Z;
 }
