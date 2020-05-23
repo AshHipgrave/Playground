@@ -812,6 +812,7 @@ bool VulkanInstance::CreateSyncObjects()
 bool VulkanInstance::InitDearImGui(HWND mainWindowHandle)
 {
 	IMGUI_CHECKVERSION();
+
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 
@@ -861,13 +862,13 @@ bool VulkanInstance::InitDearImGui(HWND mainWindowHandle)
 	initDearImGuiVulkan.ImageCount = static_cast<uint32_t>(m_SwapChainImages.size());;
 	initDearImGuiVulkan.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-	if (!::ImGui_ImplVulkan_Init(&initDearImGuiVulkan, m_VkRenderPass))
+	if (::ImGui_ImplVulkan_Init(&initDearImGuiVulkan, m_VkRenderPass) == false)
 	{
 		::OutputDebugString(L"Failed to init Dear ImGui VK Impl");
 		return false;
 	}
 
-	if (!::ImGui_ImplWin32_Init(&mainWindowHandle))
+	if (::ImGui_ImplWin32_Init(&mainWindowHandle) == false)
 	{
 		::OutputDebugString(L"Failed to init Dear ImGui Win32 Impl");
 		return false;
