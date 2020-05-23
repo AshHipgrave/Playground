@@ -5,12 +5,11 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace MathLibUnitTests
+namespace MathLib_UnitTests
 {
-	TEST_CLASS(MathLibUnitTests)
+	TEST_CLASS(Vector3f_UnitTests)
 	{
 	public:
-		
 		const float TOLERANCE = 0.001f;
 
 		/*

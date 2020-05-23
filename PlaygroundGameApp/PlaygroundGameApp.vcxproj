@@ -171,6 +171,11 @@
   <ItemGroup>
     <ClInclude Include="PlaygroundGameApp.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CommonLib\CommonLib.vcxproj">
+      <Project>{00826b4a-09ba-4140-9e44-8e6d4874b82b}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

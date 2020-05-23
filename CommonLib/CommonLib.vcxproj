@@ -217,6 +217,14 @@
     <ClInclude Include="PlaygroundCommon.h" />
     <ClInclude Include="VulkanInstance.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MathLib\MathLib.vcxproj">
+      <Project>{a64623be-160f-46de-8995-fc9c63c46af5}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\imgui-1.76\DearImGui.vcxproj">
+      <Project>{5a67d099-0264-439b-ad4d-76532103e45f}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
