@@ -1,6 +1,6 @@
 #pragma once
 
-#include "..\CommonLib\GameBase.h"
+#include "GameBase.h"
 
 GameBase* GameBase::m_pGameBase = nullptr;
 

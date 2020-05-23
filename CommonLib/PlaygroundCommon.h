@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <fstream>
 
-static std::vector<char> ReadFileAsBinary(const std::string& fileName)
+inline static std::vector<char> ReadFileAsBinary(const std::string& fileName)
 {
 	std::ifstream file(fileName, std::ios::ate | std::ios::binary);
 

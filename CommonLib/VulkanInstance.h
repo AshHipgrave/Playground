@@ -8,8 +8,8 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_win32.h>
 
-#include "../ThirdParty/imgui-1.76/imgui_impl_win32.h"
-#include "../ThirdParty/imgui-1.76/imgui_impl_vulkan.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_vulkan.h"
 
 struct QueueFamilyIndices
 {
