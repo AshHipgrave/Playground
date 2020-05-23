@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <fstream>
+#include <array>
 
 inline static std::vector<char> ReadFileAsBinary(const std::string& fileName)
 {

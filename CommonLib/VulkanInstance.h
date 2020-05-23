@@ -11,6 +11,9 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_vulkan.h"
 
+#include "Vector2f.h"
+#include "Vector3f.h"
+
 struct QueueFamilyIndices
 {
 	std::optional<uint32_t> GraphicsFamily;
@@ -28,6 +31,41 @@ struct SwapChainSupportDetails
 
 	std::vector<VkSurfaceFormatKHR> SurfaceFormats;
 	std::vector<VkPresentModeKHR> PresentModes;
+};
+
+struct Vertex
+{
+	Vector2f Position;
+	Vector3f Colour;
+
+	static VkVertexInputBindingDescription GetBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription = 
+		{
+			0,
+			sizeof(Vertex),
+			VK_VERTEX_INPUT_RATE_VERTEX
+		};
+
+		return bindingDescription;
+	}
+
+	static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions()
+	{
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+
+		attributeDescriptions[0].binding = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Vertex, Position);
+
+		attributeDescriptions[1].binding = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(Vertex, Colour);
+
+		return attributeDescriptions;
+	};
 };
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -63,6 +101,7 @@ private:
 	bool CreateFramebuffers();
 
 	bool CreateCommandPool();
+	bool CreateVertexBuffer();
 	bool CreateCommandBuffers();
 	bool CreateSyncObjects();
 
@@ -82,6 +121,8 @@ private:
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 private:
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags propertyFlags);
+
 	VkShaderModule CreateShaderModule(const std::vector<char>& bytecode);
 
 private:
@@ -107,6 +148,9 @@ private:
 
 	VkQueue m_VkGraphicsQueue = VK_NULL_HANDLE;
 	VkQueue m_VkPresentQueue = VK_NULL_HANDLE;
+
+	VkBuffer m_VkVertexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
 	
 	VkSurfaceKHR m_VkSurfaceKhr = VK_NULL_HANDLE;
 
@@ -134,6 +178,14 @@ private:
 
 	VkFormat m_VkSwapChainFormat;
 	VkExtent2D m_VkSwapChainExtent2D;
+
+private:
+	const std::vector<Vertex> m_Verticies = 
+	{
+		{ { 0.0f, -0.5f }, { 1.0f, 1.0f, 1.0f, } },
+		{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f, } },
+		{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f, } }
+	};
 
 private:
 	const std::vector<const char*> m_WantedValidationLayers = {
