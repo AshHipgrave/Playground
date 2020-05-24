@@ -451,6 +451,12 @@ public:
 	}
 
 public:
+	float operator()(int col, int row) const
+	{
+		return M[col][row];
+	}
+
+public:
 	Matrix4f Transpose() const
 	{
 		Matrix4f result;
@@ -562,9 +568,29 @@ public:
 			0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
+	class Proxy
+	{
+	public:
+		Proxy(float* _array)
+			: _array(_array)
+		{
+		}
+
+		float operator[](int index)
+		{
+			return _array[index];
+		}
+	private:
+		float* _array;
+	};
+
+	Proxy operator[](int index)
+	{
+		return Proxy(M[index]);
+	}
 };
 
-std::ostream& operator<<(std::ostream& outputStream, const Matrix4f& matrix)
+inline std::ostream& operator<<(std::ostream& outputStream, const Matrix4f& matrix)
 {
 	outputStream << "[" << matrix.M[0][0] << ", " << matrix.M[1][0] << ", " << matrix.M[2][0] << ", " << matrix.M[3][0] << "]," << "\n";
 	outputStream << "[" << matrix.M[0][1] << ", " << matrix.M[1][1] << ", " << matrix.M[2][1] << ", " << matrix.M[3][1] << "]," << "\n";
