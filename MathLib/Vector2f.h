@@ -187,7 +187,7 @@ public:
 	}
 };
 
-inline std::ostream& operator<<(std::ostream& outputStream, const Vector2f& vector)
+std::ostream& operator<<(std::ostream& outputStream, const Vector2f& vector)
 {
 	return outputStream << vector.X << ", " << vector.Y;
 }

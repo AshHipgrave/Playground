@@ -24,12 +24,24 @@
     <ClInclude Include="MathCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Matrix4f.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector4f.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vector3f.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Vector2f.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Matrix4f.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector4f.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

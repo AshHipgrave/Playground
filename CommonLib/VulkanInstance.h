@@ -103,7 +103,9 @@ private:
 	bool CreateCommandPool();
 
 	bool CreateBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags propertyFlags, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+
 	bool CreateVertexBuffer();
+	bool CreateIndexBuffer();
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize bufferSize);
 
@@ -156,6 +158,9 @@ private:
 
 	VkBuffer m_VkVertexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
+
+	VkBuffer m_VkIndexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory m_VkIndexBufferMemory = VK_NULL_HANDLE;
 	
 	VkSurfaceKHR m_VkSurfaceKhr = VK_NULL_HANDLE;
 
@@ -188,9 +193,15 @@ private:
 	const std::vector<Vertex> m_Verticies = 
 	{
 		// Position:		// Colour:
-		{ {  0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f, } },
-		{ {  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f, } },
-		{ { -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f, } }
+		{ { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f, } },
+		{ {  0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f, } },
+		{ {  0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f, } },
+		{ { -0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, } }
+	};
+
+	const std::vector<uint16_t> m_Indicies =
+	{
+		0, 1, 2, 2, 3, 0
 	};
 
 private:

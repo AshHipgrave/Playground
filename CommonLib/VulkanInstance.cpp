@@ -12,6 +12,9 @@ VulkanInstance::~VulkanInstance()
 
 		CleanupSwapChain();
 
+		::vkDestroyBuffer(m_VkDevice, m_VkIndexBuffer, nullptr);
+		::vkFreeMemory(m_VkDevice, m_VkIndexBufferMemory, nullptr);
+
 		::vkDestroyBuffer(m_VkDevice, m_VkVertexBuffer, nullptr);
 		::vkFreeMemory(m_VkDevice, m_VertexBufferMemory, nullptr);
 
@@ -78,6 +81,9 @@ bool VulkanInstance::InitVulkan(HWND mainWindowHandle)
 		return false;
 
 	if (!CreateVertexBuffer())
+		return false;
+
+	if (!CreateIndexBuffer())
 		return false;
 
 	if (!CreateCommandBuffers())
@@ -789,6 +795,39 @@ bool VulkanInstance::CreateVertexBuffer()
 
 	CopyBuffer(stagingBuffer, m_VkVertexBuffer, bufferSize);
 
+	::vkDestroyBuffer(m_VkDevice, stagingBuffer, nullptr);
+	::vkFreeMemory(m_VkDevice, stagingBufferMemory, nullptr);
+
+	return true;
+}
+
+bool VulkanInstance::CreateIndexBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(m_Indicies[0]) * m_Indicies.size();
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	
+	if (::vkMapMemory(m_VkDevice, stagingBufferMemory, 0, bufferSize, 0, &data) != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to map index buffer memory!");
+		return false;
+	}
+
+	::memcpy(data, m_Indicies.data(), (size_t)bufferSize);
+	::vkUnmapMemory(m_VkDevice, stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VkIndexBuffer, m_VkIndexBufferMemory);
+	
+	CopyBuffer(stagingBuffer, m_VkIndexBuffer, bufferSize);
+
+	::vkDestroyBuffer(m_VkDevice, stagingBuffer, nullptr);
+	::vkFreeMemory(m_VkDevice, stagingBufferMemory, nullptr);
+
 	return true;
 }
 
@@ -880,7 +919,10 @@ bool VulkanInstance::CreateCommandBuffers()
 
 		::vkCmdBindVertexBuffers(m_VkCommandBuffers[i], 0, 1, vertexBuffers, offsets);
 
-		::vkCmdDraw(m_VkCommandBuffers[i], static_cast<uint32_t>(m_Verticies.size()), 1, 0, 0);
+		::vkCmdBindIndexBuffer(m_VkCommandBuffers[i], m_VkIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+		//::vkCmdDraw(m_VkCommandBuffers[i], static_cast<uint32_t>(m_Verticies.size()), 1, 0, 0);
+		::vkCmdDrawIndexed(m_VkCommandBuffers[i], static_cast<uint32_t>(m_Indicies.size()), 1, 0, 0, 0);
 		::vkCmdEndRenderPass(m_VkCommandBuffers[i]);
 
 		result = ::vkEndCommandBuffer(m_VkCommandBuffers[i]);
