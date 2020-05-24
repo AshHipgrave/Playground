@@ -101,7 +101,12 @@ private:
 	bool CreateFramebuffers();
 
 	bool CreateCommandPool();
+
+	bool CreateBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags propertyFlags, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	bool CreateVertexBuffer();
+
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize bufferSize);
+
 	bool CreateCommandBuffers();
 	bool CreateSyncObjects();
 
@@ -182,21 +187,25 @@ private:
 private:
 	const std::vector<Vertex> m_Verticies = 
 	{
-		{ { 0.0f, -0.5f }, { 1.0f, 1.0f, 1.0f, } },
-		{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f, } },
-		{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f, } }
+		// Position:		// Colour:
+		{ {  0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f, } },
+		{ {  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f, } },
+		{ { -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f, } }
 	};
 
 private:
-	const std::vector<const char*> m_WantedValidationLayers = {
+	const std::vector<const char*> m_WantedValidationLayers = 
+	{
 		"VK_LAYER_KHRONOS_validation"
 	};
 
-	const std::vector<const char*> m_WantedDeviceExtensions = {
+	const std::vector<const char*> m_WantedDeviceExtensions = 
+	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
-	const std::vector<const char*> m_WantedInstanceExtensions = {
+	const std::vector<const char*> m_WantedInstanceExtensions = 
+	{
 		VK_KHR_SURFACE_EXTENSION_NAME,
 		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #if defined(_DEBUG) || defined(DEBUG)

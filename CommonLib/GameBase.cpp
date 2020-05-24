@@ -219,7 +219,7 @@ LRESULT GameBase::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void GameBase::OnResize()
 {
-	if (m_VulkanInstance.IsInitialised())
+	if (m_VulkanInstance.IsInitialised() && m_ClientWindowHeight > 0 && m_ClientWindowWidth > 0)
 	{
 		m_VulkanInstance.RecreateSwapChain();
 	}

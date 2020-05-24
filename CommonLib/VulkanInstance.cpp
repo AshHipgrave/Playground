@@ -728,46 +728,104 @@ bool VulkanInstance::CreateCommandPool()
 	return true;
 }
 
-bool VulkanInstance::CreateVertexBuffer()
+bool VulkanInstance::CreateBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags propertyFlags, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-
-	bufferCreateInfo.size = sizeof(m_Verticies[0]) * m_Verticies.size();
-
-	bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferCreateInfo.size = bufferSize;
+	bufferCreateInfo.usage = usageFlags;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (::vkCreateBuffer(m_VkDevice, &bufferCreateInfo, nullptr, &m_VkVertexBuffer) != VK_SUCCESS)
+	if (::vkCreateBuffer(m_VkDevice, &bufferCreateInfo, nullptr, &buffer) != VK_SUCCESS)
 	{
-		::OutputDebugString(L"Failed to create VertexBuffer!");
+		::OutputDebugString(L"Failed to create buffer!");
 		return false;
 	}
 
 	VkMemoryRequirements memoryRequirements = {};
-	::vkGetBufferMemoryRequirements(m_VkDevice, m_VkVertexBuffer, &memoryRequirements);
+	::vkGetBufferMemoryRequirements(m_VkDevice, buffer, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.allocationSize = memoryRequirements.size;
-	memoryAllocateInfo.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	memoryAllocateInfo.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, propertyFlags);
 
-	if (::vkAllocateMemory(m_VkDevice, &memoryAllocateInfo, nullptr, &m_VertexBufferMemory) != VK_SUCCESS)
+	if (::vkAllocateMemory(m_VkDevice, &memoryAllocateInfo, nullptr, &bufferMemory) != VK_SUCCESS)
 	{
-		::OutputDebugString(L"Failed to allocate vertex buffer memory!");
+		::OutputDebugString(L"Failed to allocate buffer memory!");
 		return false;
 	}
 
-	::vkBindBufferMemory(m_VkDevice, m_VkVertexBuffer, m_VertexBufferMemory, 0);
-
-	void* vertexData = nullptr;
-	::vkMapMemory(m_VkDevice, m_VertexBufferMemory, 0, bufferCreateInfo.size, 0, &vertexData);
-
-	::memcpy(vertexData, m_Verticies.data(), (size_t)bufferCreateInfo.size);
-
-	::vkUnmapMemory(m_VkDevice, m_VertexBufferMemory);
+	if (::vkBindBufferMemory(m_VkDevice, buffer, bufferMemory, 0) != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to bind buffer memory!");
+		return false;
+	}
 
 	return true;
+}
+
+bool VulkanInstance::CreateVertexBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(m_Verticies[0]) * m_Verticies.size();
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* vertexData = nullptr;
+
+	if (::vkMapMemory(m_VkDevice, stagingBufferMemory, 0, bufferSize, 0, &vertexData) != VK_SUCCESS)
+	{
+		::OutputDebugString(L"Failed to map vertex buffer memory!");
+		return false;
+	}
+
+	::memcpy(vertexData, m_Verticies.data(), (size_t)bufferSize);
+	::vkUnmapMemory(m_VkDevice, stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VkVertexBuffer, m_VertexBufferMemory);
+
+	CopyBuffer(stagingBuffer, m_VkVertexBuffer, bufferSize);
+
+	return true;
+}
+
+void VulkanInstance::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize bufferSize)
+{
+	VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
+	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	commandBufferAllocateInfo.commandPool = m_VkCommandPool;
+	commandBufferAllocateInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	::vkAllocateCommandBuffers(m_VkDevice, &commandBufferAllocateInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo commandBufferBeginInfo = {};
+	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	::vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+
+	VkBufferCopy bufferCopy = {};
+	bufferCopy.srcOffset = 0;
+	bufferCopy.dstOffset = 0;
+	bufferCopy.size = bufferSize;
+
+	::vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &bufferCopy);
+	::vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	::vkQueueSubmit(m_VkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	::vkQueueWaitIdle(m_VkGraphicsQueue);
+
+	::vkFreeCommandBuffers(m_VkDevice, m_VkCommandPool, 1, &commandBuffer);
 }
 
 bool VulkanInstance::CreateCommandBuffers()
@@ -962,7 +1020,7 @@ VkPresentModeKHR VulkanInstance::SelectSwapPresentMode(const std::vector<VkPrese
 
 VkExtent2D VulkanInstance::SelectSwapExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities)
 {
-	if (surfaceCapabilities.currentExtent.width != UINT32_MAX)
+	if (surfaceCapabilities.currentExtent.width != UINT32_MAX && surfaceCapabilities.currentExtent.width > 0 && surfaceCapabilities.currentExtent.height > 0)
 	{
 		return surfaceCapabilities.currentExtent;
 	}
