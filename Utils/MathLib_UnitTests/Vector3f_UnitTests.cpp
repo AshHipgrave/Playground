@@ -45,13 +45,28 @@ namespace MathLib_UnitTests
 		}
 
 		/*
+		* Tests the overloaded copy constructor operator
+		*/
+		TEST_METHOD(VectorCopyConstuctor)
+		{
+			const Vector3f vec1(2.1f, 3.1f, 0.0f);
+
+			const Vector3f vec2 = vec1;
+
+			Assert::AreEqual(vec1.X, vec2.X, TOLERANCE);
+			Assert::AreEqual(vec1.Y, vec2.Y, TOLERANCE);
+			Assert::AreEqual(vec1.Z, vec2.Z, TOLERANCE);
+		}
+
+		/*
 		* Tests the overloaded assignment operator
 		*/
 		TEST_METHOD(VectorAssignment)
 		{
 			const Vector3f vec1(2.1f, 3.1f, 0.0f);
 
-			const Vector3f vec2 = vec1;
+			Vector3f vec2;
+			vec2 = vec1;
 
 			Assert::AreEqual(vec1.X, vec2.X, TOLERANCE);
 			Assert::AreEqual(vec1.Y, vec2.Y, TOLERANCE);
