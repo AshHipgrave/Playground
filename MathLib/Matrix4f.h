@@ -60,49 +60,49 @@ public:
 
 	Matrix4f(const Matrix4f& other)
 	{
-		M[0][0] = other.M[0][0];
-		M[0][1] = other.M[0][1];
-		M[0][2] = other.M[0][2];
-		M[0][3] = other.M[0][3];
+		M[0][0] = other[0][0];
+		M[0][1] = other[0][1];
+		M[0][2] = other[0][2];
+		M[0][3] = other[0][3];
 
-		M[1][0] = other.M[1][0];
-		M[1][1] = other.M[1][1];
-		M[1][2] = other.M[1][2];
-		M[1][3] = other.M[1][3];
+		M[1][0] = other[1][0];
+		M[1][1] = other[1][1];
+		M[1][2] = other[1][2];
+		M[1][3] = other[1][3];
 
-		M[2][0] = other.M[2][0];
-		M[2][1] = other.M[2][1];
-		M[2][2] = other.M[2][2];
-		M[2][3] = other.M[2][3];
+		M[2][0] = other[2][0];
+		M[2][1] = other[2][1];
+		M[2][2] = other[2][2];
+		M[2][3] = other[2][3];
 
-		M[3][0] = other.M[3][0];
-		M[3][1] = other.M[3][1];
-		M[3][2] = other.M[3][2];
-		M[3][3] = other.M[3][3];
+		M[3][0] = other[3][0];
+		M[3][1] = other[3][1];
+		M[3][2] = other[3][2];
+		M[3][3] = other[3][3];
 	}
 
 public:
 	Matrix4f& operator=(const Matrix4f& other)
 	{
-		M[0][0] = other.M[0][0];
-		M[0][1] = other.M[0][1];
-		M[0][2] = other.M[0][2];
-		M[0][3] = other.M[0][3];
+		M[0][0] = other[0][0];
+		M[0][1] = other[0][1];
+		M[0][2] = other[0][2];
+		M[0][3] = other[0][3];
 
-		M[1][0] = other.M[1][0];
-		M[1][1] = other.M[1][1];
-		M[1][2] = other.M[1][2];
-		M[1][3] = other.M[1][3];
+		M[1][0] = other[1][0];
+		M[1][1] = other[1][1];
+		M[1][2] = other[1][2];
+		M[1][3] = other[1][3];
 
-		M[2][0] = other.M[2][0];
-		M[2][1] = other.M[2][1];
-		M[2][2] = other.M[2][2];
-		M[2][3] = other.M[2][3];
+		M[2][0] = other[2][0];
+		M[2][1] = other[2][1];
+		M[2][2] = other[2][2];
+		M[2][3] = other[2][3];
 
-		M[3][0] = other.M[3][0];
-		M[3][1] = other.M[3][1];
-		M[3][2] = other.M[3][2];
-		M[3][3] = other.M[3][3];
+		M[3][0] = other[3][0];
+		M[3][1] = other[3][1];
+		M[3][2] = other[3][2];
+		M[3][3] = other[3][3];
 
 		return *this;
 	}
@@ -111,50 +111,50 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0] + other.M[0][0];
-		result.M[0][1] = M[1][0] + other.M[1][0];
-		result.M[0][2] = M[2][0] + other.M[2][0];
-		result.M[0][3] = M[3][0] + other.M[3][0];
+		result[0][0] = M[0][0] + other[0][0];
+		result[0][1] = M[0][1] + other[0][1];
+		result[0][2] = M[0][2] + other[0][2];
+		result[0][3] = M[0][3] + other[0][3];
 
-		result.M[1][0] = M[0][1] + other.M[0][1];
-		result.M[1][1] = M[1][1] + other.M[1][1];
-		result.M[1][2] = M[2][1] + other.M[2][1];
-		result.M[1][3] = M[3][1] + other.M[3][1];
+		result[1][0] = M[1][0] + other[1][0];
+		result[1][1] = M[1][1] + other[1][1];
+		result[1][2] = M[1][2] + other[1][2];
+		result[1][3] = M[1][3] + other[1][3];
 
-		result.M[2][0] = M[0][2] + other.M[0][1];
-		result.M[2][1] = M[1][2] + other.M[1][1];
-		result.M[2][2] = M[2][2] + other.M[2][1];
-		result.M[2][3] = M[3][2] + other.M[3][1];
+		result[2][0] = M[2][0] + other[2][0];
+		result[2][1] = M[2][1] + other[2][1];
+		result[2][2] = M[2][2] + other[2][2];
+		result[2][3] = M[2][3] + other[2][3];
 
-		result.M[3][0] = M[0][3] + other.M[0][1];
-		result.M[3][1] = M[1][3] + other.M[1][1];
-		result.M[3][2] = M[2][3] + other.M[2][1];
-		result.M[3][3] = M[3][3] + other.M[3][1];
+		result[3][0] = M[3][0] + other[3][0];
+		result[3][1] = M[3][1] + other[3][1];
+		result[3][2] = M[3][2] + other[3][2];
+		result[3][3] = M[3][3] + other[3][3];
 
 		return result;
 	}
 
 	Matrix4f& operator+=(const Matrix4f& other)
 	{
-		M[0][0] += other.M[0][0];
-		M[1][0] += other.M[1][0];
-		M[2][0] += other.M[2][0];
-		M[3][0] += other.M[3][0];
+		M[0][0] += other[0][0];
+		M[0][1] += other[0][1];
+		M[0][2] += other[0][2];
+		M[0][3] += other[0][3];
 
-		M[0][1] += other.M[0][1];
-		M[1][1] += other.M[1][1];
-		M[2][1] += other.M[2][1];
-		M[3][1] += other.M[3][1];
+		M[1][0] += other[1][0];
+		M[1][1] += other[1][1];
+		M[1][2] += other[1][2];
+		M[1][3] += other[1][3];
 
-		M[0][2] += other.M[0][1];
-		M[1][2] += other.M[1][1];
-		M[2][2] += other.M[2][1];
-		M[3][2] += other.M[3][1];
+		M[2][0] += other[2][0];
+		M[2][1] += other[2][1];
+		M[2][2] += other[2][2];
+		M[2][3] += other[2][3];
 
-		M[0][3] += other.M[0][1];
-		M[1][3] += other.M[1][1];
-		M[2][3] += other.M[2][1];
-		M[3][3] += other.M[3][1];
+		M[3][0] += other[3][0];
+		M[3][1] += other[3][1];
+		M[3][2] += other[3][2];
+		M[3][3] += other[3][3];
 
 		return *this;
 	}
@@ -163,50 +163,50 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0] - other.M[0][0];
-		result.M[0][1] = M[1][0] - other.M[1][0];
-		result.M[0][2] = M[2][0] - other.M[2][0];
-		result.M[0][3] = M[3][0] - other.M[3][0];
+		result[0][0] = M[0][0] - other[0][0];
+		result[0][1] = M[0][1] - other[0][1];
+		result[0][2] = M[0][2] - other[0][2];
+		result[0][3] = M[0][3] - other[0][3];
 
-		result.M[1][0] = M[0][1] - other.M[0][1];
-		result.M[1][1] = M[1][1] - other.M[1][1];
-		result.M[1][2] = M[2][1] - other.M[2][1];
-		result.M[1][3] = M[3][1] - other.M[3][1];
+		result[1][0] = M[1][0] - other[1][0];
+		result[1][1] = M[1][1] - other[1][1];
+		result[1][2] = M[1][2] - other[1][2];
+		result[1][3] = M[1][3] - other[1][3];
 
-		result.M[2][0] = M[0][2] - other.M[0][1];
-		result.M[2][1] = M[1][2] - other.M[1][1];
-		result.M[2][2] = M[2][2] - other.M[2][1];
-		result.M[2][3] = M[3][2] - other.M[3][1];
+		result[2][0] = M[2][0] - other[2][0];
+		result[2][1] = M[2][1] - other[2][1];
+		result[2][2] = M[2][2] - other[2][2];
+		result[2][3] = M[2][3] - other[2][3];
 
-		result.M[3][0] = M[0][3] - other.M[0][1];
-		result.M[3][1] = M[1][3] - other.M[1][1];
-		result.M[3][2] = M[2][3] - other.M[2][1];
-		result.M[3][3] = M[3][3] - other.M[3][1];
+		result[3][0] = M[3][0] - other[3][0];
+		result[3][1] = M[3][1] - other[3][1];
+		result[3][2] = M[3][2] - other[3][2];
+		result[3][3] = M[3][3] - other[3][3];
 
 		return result;
 	}
 
 	Matrix4f& operator-=(const Matrix4f& other)
 	{
-		M[0][0] -= other.M[0][0];
-		M[1][0] -= other.M[1][0];
-		M[2][0] -= other.M[2][0];
-		M[3][0] -= other.M[3][0];
+		M[0][0] -= other[0][0];
+		M[0][1] -= other[0][1];
+		M[0][2] -= other[0][2];
+		M[0][3] -= other[0][3];
 
-		M[0][1] -= other.M[0][1];
-		M[1][1] -= other.M[1][1];
-		M[2][1] -= other.M[2][1];
-		M[3][1] -= other.M[3][1];
+		M[1][0] -= other[1][0];
+		M[1][1] -= other[1][1];
+		M[1][2] -= other[1][2];
+		M[1][3] -= other[1][3];
 
-		M[0][2] -= other.M[0][1];
-		M[1][2] -= other.M[1][1];
-		M[2][2] -= other.M[2][1];
-		M[3][2] -= other.M[3][1];
+		M[2][0] -= other[2][0];
+		M[2][1] -= other[2][1];
+		M[2][2] -= other[2][2];
+		M[2][3] -= other[2][3];
 
-		M[0][3] -= other.M[0][1];
-		M[1][3] -= other.M[1][1];
-		M[2][3] -= other.M[2][1];
-		M[3][3] -= other.M[3][1];
+		M[3][0] -= other[3][0];
+		M[3][1] -= other[3][1];
+		M[3][2] -= other[3][2];
+		M[3][3] -= other[3][3];
 
 		return *this;
 	}
@@ -215,25 +215,25 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0] * other.M[0][0] + M[0][1] * other.M[1][0] + M[0][2] * other.M[2][0] + M[0][3] * other.M[3][0];
-		result.M[0][1] = M[0][0] * other.M[0][1] + M[0][1] * other.M[1][1] + M[0][2] * other.M[2][1] + M[0][3] * other.M[3][1];
-		result.M[0][2] = M[0][0] * other.M[0][2] + M[0][1] * other.M[1][2] + M[0][2] * other.M[2][2] + M[0][3] * other.M[3][2];
-		result.M[0][3] = M[0][0] * other.M[0][3] + M[0][1] * other.M[1][3] + M[0][2] * other.M[2][3] + M[0][3] * other.M[3][3];
+		result[0][0] = M[0][0] * other[0][0] + M[0][1] * other[1][0] + M[0][2] * other[2][0] + M[0][3] * other[3][0];
+		result[0][1] = M[0][0] * other[0][1] + M[0][1] * other[1][1] + M[0][2] * other[2][1] + M[0][3] * other[3][1];
+		result[0][2] = M[0][0] * other[0][2] + M[0][1] * other[1][2] + M[0][2] * other[2][2] + M[0][3] * other[3][2];
+		result[0][3] = M[0][0] * other[0][3] + M[0][1] * other[1][3] + M[0][2] * other[2][3] + M[0][3] * other[3][3];
 
-		result.M[1][0] = M[1][0] * other.M[0][0] + M[1][1] * other.M[1][0] + M[1][2] * other.M[2][0] + M[1][3] * other.M[3][0];
-		result.M[1][1] = M[1][0] * other.M[0][1] + M[1][1] * other.M[1][1] + M[1][2] * other.M[2][1] + M[1][3] * other.M[3][1];
-		result.M[1][2] = M[1][0] * other.M[0][2] + M[1][1] * other.M[1][2] + M[1][2] * other.M[2][2] + M[1][3] * other.M[3][2];
-		result.M[1][3] = M[1][0] * other.M[0][3] + M[1][1] * other.M[1][3] + M[1][2] * other.M[2][3] + M[1][3] * other.M[3][3];
+		result[1][0] = M[1][0] * other[0][0] + M[1][1] * other[1][0] + M[1][2] * other[2][0] + M[1][3] * other[3][0];
+		result[1][1] = M[1][0] * other[0][1] + M[1][1] * other[1][1] + M[1][2] * other[2][1] + M[1][3] * other[3][1];
+		result[1][2] = M[1][0] * other[0][2] + M[1][1] * other[1][2] + M[1][2] * other[2][2] + M[1][3] * other[3][2];
+		result[1][3] = M[1][0] * other[0][3] + M[1][1] * other[1][3] + M[1][2] * other[2][3] + M[1][3] * other[3][3];
 
-		result.M[2][0] = M[2][0] * other.M[0][0] + M[2][1] * other.M[1][0] + M[2][2] * other.M[2][0] + M[2][3] * other.M[3][0];
-		result.M[2][1] = M[2][0] * other.M[0][1] + M[2][1] * other.M[1][1] + M[2][2] * other.M[2][1] + M[2][3] * other.M[3][1];
-		result.M[2][2] = M[2][0] * other.M[0][2] + M[2][1] * other.M[1][2] + M[2][2] * other.M[2][2] + M[2][3] * other.M[3][2];
-		result.M[2][3] = M[2][0] * other.M[0][3] + M[2][1] * other.M[1][3] + M[2][2] * other.M[2][3] + M[2][3] * other.M[3][3];
+		result[2][0] = M[2][0] * other[0][0] + M[2][1] * other[1][0] + M[2][2] * other[2][0] + M[2][3] * other[3][0];
+		result[2][1] = M[2][0] * other[0][1] + M[2][1] * other[1][1] + M[2][2] * other[2][1] + M[2][3] * other[3][1];
+		result[2][2] = M[2][0] * other[0][2] + M[2][1] * other[1][2] + M[2][2] * other[2][2] + M[2][3] * other[3][2];
+		result[2][3] = M[2][0] * other[0][3] + M[2][1] * other[1][3] + M[2][2] * other[2][3] + M[2][3] * other[3][3];
 
-		result.M[3][0] = M[3][0] * other.M[0][0] + M[3][1] * other.M[1][0] + M[3][2] * other.M[2][0] + M[3][3] * other.M[3][0];
-		result.M[3][1] = M[3][0] * other.M[0][1] + M[3][1] * other.M[1][1] + M[3][2] * other.M[2][1] + M[3][3] * other.M[3][1];
-		result.M[3][2] = M[3][0] * other.M[0][2] + M[3][1] * other.M[1][2] + M[3][2] * other.M[2][2] + M[3][3] * other.M[3][2];
-		result.M[3][3] = M[3][0] * other.M[0][3] + M[3][1] * other.M[1][3] + M[3][2] * other.M[2][3] + M[3][3] * other.M[3][3];
+		result[3][0] = M[3][0] * other[0][0] + M[3][1] * other[1][0] + M[3][2] * other[2][0] + M[3][3] * other[3][0];
+		result[3][1] = M[3][0] * other[0][1] + M[3][1] * other[1][1] + M[3][2] * other[2][1] + M[3][3] * other[3][1];
+		result[3][2] = M[3][0] * other[0][2] + M[3][1] * other[1][2] + M[3][2] * other[2][2] + M[3][3] * other[3][2];
+		result[3][3] = M[3][0] * other[0][3] + M[3][1] * other[1][3] + M[3][2] * other[2][3] + M[3][3] * other[3][3];
 
 		return result;
 	}
@@ -242,49 +242,49 @@ public:
 	bool operator==(const Matrix4f& other) const
 	{
 		return
-			M[0][0] == other.M[0][0] &&
-			M[1][0] == other.M[1][0] &&
-			M[2][0] == other.M[2][0] &&
-			M[3][0] == other.M[3][0] &&
+			M[0][0] == other[0][0] &&
+			M[0][1] == other[0][1] &&
+			M[0][2] == other[0][2] &&
+			M[0][3] == other[0][3] &&
 
-			M[0][1] == other.M[0][1] &&
-			M[1][1] == other.M[1][1] &&
-			M[2][1] == other.M[2][1] &&
-			M[3][1] == other.M[3][1] &&
+			M[1][0] == other[1][0] &&
+			M[1][1] == other[1][1] &&
+			M[1][2] == other[1][2] &&
+			M[1][3] == other[1][3] &&
 
-			M[0][2] == other.M[0][1] &&
-			M[1][2] == other.M[1][1] &&
-			M[2][2] == other.M[2][1] &&
-			M[3][2] == other.M[3][1] &&
+			M[2][0] == other[2][0] &&
+			M[2][1] == other[2][1] &&
+			M[2][2] == other[2][2] &&
+			M[2][3] == other[2][3] &&
 
-			M[0][3] == other.M[0][1] &&
-			M[1][3] == other.M[1][1] &&
-			M[2][3] == other.M[2][1] &&
-			M[3][3] == other.M[3][1];
+			M[3][0] == other[3][0] &&
+			M[3][1] == other[3][1] &&
+			M[3][2] == other[3][2] &&
+			M[3][3] == other[3][3];
 	}
 
 	bool operator!=(const Matrix4f& other) const
 	{
 		return
-			M[0][0] != other.M[0][0] ||
-			M[1][0] != other.M[1][0] ||
-			M[2][0] != other.M[2][0] ||
-			M[3][0] != other.M[3][0] ||
+			M[0][0] != other[0][0] ||
+			M[0][1] != other[0][1] ||
+			M[0][2] != other[0][2] ||
+			M[0][3] != other[0][3] ||
 
-			M[0][1] != other.M[0][1] ||
-			M[1][1] != other.M[1][1] ||
-			M[2][1] != other.M[2][1] ||
-			M[3][1] != other.M[3][1] ||
+			M[1][0] != other[1][0] ||
+			M[1][1] != other[1][1] ||
+			M[1][2] != other[1][2] ||
+			M[1][3] != other[1][3] ||
 
-			M[0][2] != other.M[0][1] ||
-			M[1][2] != other.M[1][1] ||
-			M[2][2] != other.M[2][1] ||
-			M[3][2] != other.M[3][1] ||
+			M[2][0] != other[2][0] ||
+			M[2][1] != other[2][1] ||
+			M[2][2] != other[2][2] ||
+			M[2][3] != other[2][3] ||
 
-			M[0][3] != other.M[0][1] ||
-			M[1][3] != other.M[1][1] ||
-			M[2][3] != other.M[2][1] ||
-			M[3][3] != other.M[3][1];
+			M[3][0] != other[3][0] ||
+			M[3][1] != other[3][1] ||
+			M[3][2] != other[3][2] ||
+			M[3][3] != other[3][3];
 	}
 
 public:
@@ -293,25 +293,25 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0] + value;
-		result.M[0][1] = M[1][0] + value;
-		result.M[0][2] = M[2][0] + value;
-		result.M[0][3] = M[3][0] + value;
+		result[0][0] = M[0][0] + value;
+		result[0][1] = M[0][1] + value;
+		result[0][2] = M[0][2] + value;
+		result[0][3] = M[0][3] + value;
 
-		result.M[1][0] = M[0][1] + value;
-		result.M[1][1] = M[1][1] + value;
-		result.M[1][2] = M[2][1] + value;
-		result.M[1][3] = M[3][1] + value;
+		result[1][0] = M[1][0] + value;
+		result[1][1] = M[1][1] + value;
+		result[1][2] = M[1][2] + value;
+		result[1][3] = M[1][3] + value;
 
-		result.M[2][0] = M[0][2] + value;
-		result.M[2][1] = M[1][2] + value;
-		result.M[2][2] = M[2][2] + value;
-		result.M[2][3] = M[3][2] + value;
+		result[2][0] = M[2][0] + value;
+		result[2][1] = M[2][1] + value;
+		result[2][2] = M[2][2] + value;
+		result[2][3] = M[2][3] + value;
 
-		result.M[3][0] = M[0][3] + value;
-		result.M[3][1] = M[1][3] + value;
-		result.M[3][2] = M[2][3] + value;
-		result.M[3][3] = M[3][3] + value;
+		result[3][0] = M[3][0] + value;
+		result[3][1] = M[3][1] + value;
+		result[3][2] = M[3][2] + value;
+		result[3][3] = M[3][3] + value;
 
 		return result;
 	}
@@ -320,23 +320,23 @@ public:
 	Matrix4f& operator+=(T value)
 	{
 		M[0][0] += value;
-		M[1][0] += value;
-		M[2][0] += value;
-		M[3][0] += value;
-
 		M[0][1] += value;
-		M[1][1] += value;
-		M[2][1] += value;
-		M[3][1] += value;
-
 		M[0][2] += value;
-		M[1][2] += value;
-		M[2][2] += value;
-		M[3][2] += value;
-
 		M[0][3] += value;
+
+		M[1][0] += value;
+		M[1][1] += value;
+		M[1][2] += value;
 		M[1][3] += value;
+
+		M[2][0] += value;
+		M[2][1] += value;
+		M[2][2] += value;
 		M[2][3] += value;
+
+		M[3][0] += value;
+		M[3][1] += value;
+		M[3][2] += value;
 		M[3][3] += value;
 
 		return *this;
@@ -347,25 +347,25 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0] - value;
-		result.M[0][1] = M[1][0] - value;
-		result.M[0][2] = M[2][0] - value;
-		result.M[0][3] = M[3][0] - value;
+		result[0][0] = M[0][0] - value;
+		result[0][1] = M[0][1] - value;
+		result[0][2] = M[0][2] - value;
+		result[0][3] = M[0][3] - value;
 
-		result.M[1][0] = M[0][1] - value;
-		result.M[1][1] = M[1][1] - value;
-		result.M[1][2] = M[2][1] - value;
-		result.M[1][3] = M[3][1] - value;
+		result[1][0] = M[1][0] - value;
+		result[1][1] = M[1][1] - value;
+		result[1][2] = M[1][2] - value;
+		result[1][3] = M[1][3] - value;
 
-		result.M[2][0] = M[0][2] - value;
-		result.M[2][1] = M[1][2] - value;
-		result.M[2][2] = M[2][2] - value;
-		result.M[2][3] = M[3][2] - value;
+		result[2][0] = M[2][0] - value;
+		result[2][1] = M[2][1] - value;
+		result[2][2] = M[2][2] - value;
+		result[2][3] = M[2][3] - value;
 
-		result.M[3][0] = M[0][3] - value;
-		result.M[3][1] = M[1][3] - value;
-		result.M[3][2] = M[2][3] - value;
-		result.M[3][3] = M[3][3] - value;
+		result[3][0] = M[3][0] - value;
+		result[3][1] = M[3][1] - value;
+		result[3][2] = M[3][2] - value;
+		result[3][3] = M[3][3] - value;
 
 		return result;
 	}
@@ -374,23 +374,23 @@ public:
 	Matrix4f& operator-=(T value)
 	{
 		M[0][0] -= value;
-		M[1][0] -= value;
-		M[2][0] -= value;
-		M[3][0] -= value;
-
 		M[0][1] -= value;
-		M[1][1] -= value;
-		M[2][1] -= value;
-		M[3][1] -= value;
-
 		M[0][2] -= value;
-		M[1][2] -= value;
-		M[2][2] -= value;
-		M[3][2] -= value;
-
 		M[0][3] -= value;
+
+		M[1][0] -= value;
+		M[1][1] -= value;
+		M[1][2] -= value;
 		M[1][3] -= value;
+
+		M[2][0] -= value;
+		M[2][1] -= value;
+		M[2][2] -= value;
 		M[2][3] -= value;
+
+		M[3][0] -= value;
+		M[3][1] -= value;
+		M[3][2] -= value;
 		M[3][3] -= value;
 
 		return *this;
@@ -401,25 +401,25 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0] * value;
-		result.M[0][1] = M[1][0] * value;
-		result.M[0][2] = M[2][0] * value;
-		result.M[0][3] = M[3][0] * value;
+		result[0][0] = M[0][0] * value;
+		result[0][1] = M[0][1] * value;
+		result[0][2] = M[0][2] * value;
+		result[0][3] = M[0][3] * value;
 
-		result.M[1][0] = M[0][1] * value;
-		result.M[1][1] = M[1][1] * value;
-		result.M[1][2] = M[2][1] * value;
-		result.M[1][3] = M[3][1] * value;
+		result[1][0] = M[1][0] * value;
+		result[1][1] = M[1][1] * value;
+		result[1][2] = M[1][2] * value;
+		result[1][3] = M[1][3] * value;
 
-		result.M[2][0] = M[0][2] * value;
-		result.M[2][1] = M[1][2] * value;
-		result.M[2][2] = M[2][2] * value;
-		result.M[2][3] = M[3][2] * value;
+		result[2][0] = M[2][0] * value;
+		result[2][1] = M[2][1] * value;
+		result[2][2] = M[2][2] * value;
+		result[2][3] = M[2][3] * value;
 
-		result.M[3][0] = M[0][3] * value;
-		result.M[3][1] = M[1][3] * value;
-		result.M[3][2] = M[2][3] * value;
-		result.M[3][3] = M[3][3] * value;
+		result[3][0] = M[3][0] * value;
+		result[3][1] = M[3][1] * value;
+		result[3][2] = M[3][2] * value;
+		result[3][3] = M[3][3] * value;
 
 		return result;
 	}
@@ -428,32 +428,37 @@ public:
 	Matrix4f& operator*=(T value)
 	{
 		M[0][0] *= value;
-		M[1][0] *= value;
-		M[2][0] *= value;
-		M[3][0] *= value;
-
 		M[0][1] *= value;
-		M[1][1] *= value;
-		M[2][1] *= value;
-		M[3][1] *= value;
-
 		M[0][2] *= value;
-		M[1][2] *= value;
-		M[2][2] *= value;
-		M[3][2] *= value;
-
 		M[0][3] *= value;
+
+		M[1][0] *= value;
+		M[1][1] *= value;
+		M[1][2] *= value;
 		M[1][3] *= value;
+
+		M[2][0] *= value;
+		M[2][1] *= value;
+		M[2][2] *= value;
 		M[2][3] *= value;
+
+		M[3][0] *= value;
+		M[3][1] *= value;
+		M[3][2] *= value;
 		M[3][3] *= value;
 
 		return *this;
 	}
 
 public:
-	float operator()(int col, int row) const
+	float* operator[](int index)
 	{
-		return M[col][row];
+		return M[index];
+	}
+
+	const float* operator[](int index) const
+	{
+		return M[index];
 	}
 
 public:
@@ -461,25 +466,25 @@ public:
 	{
 		Matrix4f result;
 
-		result.M[0][0] = M[0][0];
-		result.M[0][1] = M[1][0];
-		result.M[0][2] = M[2][0];
-		result.M[0][3] = M[3][0];
+		result[0][0] = M[0][0];
+		result[0][1] = M[1][0];
+		result[0][2] = M[2][0];
+		result[0][3] = M[3][0];
 
-		result.M[1][0] = M[0][1];
-		result.M[1][1] = M[1][1];
-		result.M[1][2] = M[2][1];
-		result.M[1][3] = M[3][1];
+		result[1][0] = M[0][1];
+		result[1][1] = M[1][1];
+		result[1][2] = M[2][1];
+		result[1][3] = M[3][1];
 
-		result.M[2][0] = M[0][2];
-		result.M[2][1] = M[1][2];
-		result.M[2][2] = M[2][2];
-		result.M[2][3] = M[3][2];
+		result[2][0] = M[0][2];
+		result[2][1] = M[1][2];
+		result[2][2] = M[2][2];
+		result[2][3] = M[3][2];
 
-		result.M[3][0] = M[0][3];
-		result.M[3][1] = M[1][3];
-		result.M[3][2] = M[2][3];
-		result.M[3][3] = M[3][3];
+		result[3][0] = M[0][3];
+		result[3][1] = M[1][3];
+		result[3][2] = M[2][3];
+		result[3][3] = M[3][3];
 
 		return result;
 	}
@@ -515,13 +520,13 @@ public:
 		if (determinant == 0.0f)
 		{
 			return Matrix4f::Identity();
-
-			return Matrix4f(); //Matrix4f::Identity;
 		}
 		else
 		{
 			Matrix4f temp;
 			Matrix4f result;
+
+			// TODO
 		}
 	}
 
@@ -567,35 +572,14 @@ public:
 			0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f);
 	}
-
-	class Proxy
-	{
-	public:
-		Proxy(float* _array)
-			: _array(_array)
-		{
-		}
-
-		float operator[](int index)
-		{
-			return _array[index];
-		}
-	private:
-		float* _array;
-	};
-
-	Proxy operator[](int index)
-	{
-		return Proxy(M[index]);
-	}
 };
 
 inline std::ostream& operator<<(std::ostream& outputStream, const Matrix4f& matrix)
 {
-	outputStream << "[" << matrix.M[0][0] << ", " << matrix.M[1][0] << ", " << matrix.M[2][0] << ", " << matrix.M[3][0] << "]," << "\n";
-	outputStream << "[" << matrix.M[0][1] << ", " << matrix.M[1][1] << ", " << matrix.M[2][1] << ", " << matrix.M[3][1] << "]," << "\n";
-	outputStream << "[" << matrix.M[0][2] << ", " << matrix.M[1][2] << ", " << matrix.M[2][2] << ", " << matrix.M[3][2] << "]," << "\n";
-	outputStream << "[" << matrix.M[0][3] << ", " << matrix.M[1][3] << ", " << matrix.M[2][3] << ", " << matrix.M[3][3] << "]";
+	outputStream << "[" << matrix[0][0] << ", " << matrix[0][1] << ", " << matrix[0][2] << ", " << matrix[0][3] << "]," << "\n";
+	outputStream << "[" << matrix[1][0] << ", " << matrix[1][1] << ", " << matrix[1][2] << ", " << matrix[1][3] << "]," << "\n";
+	outputStream << "[" << matrix[2][0] << ", " << matrix[2][1] << ", " << matrix[2][2] << ", " << matrix[2][3] << "]," << "\n";
+	outputStream << "[" << matrix[3][0] << ", " << matrix[3][1] << ", " << matrix[3][2] << ", " << matrix[3][3] << "]";
 
 	return outputStream;
 }
