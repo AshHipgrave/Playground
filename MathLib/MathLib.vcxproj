@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClInclude Include="MathCommon.h" />
     <ClInclude Include="Matrix4f.h" />
+    <ClInclude Include="MatrixTransforms.h" />
     <ClInclude Include="Vector2f.h" />
     <ClInclude Include="Vector3f.h" />
     <ClInclude Include="Vector4f.h" />

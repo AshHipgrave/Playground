@@ -2,6 +2,8 @@
 
 #include "MathCommon.h"
 
+#include "Vector4f.h"
+
 class Matrix4f
 {
 public:
@@ -446,6 +448,163 @@ public:
 		M[3][1] *= value;
 		M[3][2] *= value;
 		M[3][3] *= value;
+
+		return *this;
+	}
+
+public:
+	Matrix4f operator+(Vector4f vector) const
+	{
+		Matrix4f result;
+
+		result[0][0] = M[0][0] + vector.X;
+		result[0][1] = M[0][1] + vector.Y;
+		result[0][2] = M[0][2] + vector.Z;
+		result[0][3] = M[0][3] + vector.W;
+
+		result[1][0] = M[1][0] + vector.X;
+		result[1][1] = M[1][1] + vector.Y;
+		result[1][2] = M[1][2] + vector.Z;
+		result[1][3] = M[1][3] + vector.W;
+
+		result[2][0] = M[2][0] + vector.X;
+		result[2][1] = M[2][1] + vector.Y;
+		result[2][2] = M[2][2] + vector.Z;
+		result[2][3] = M[2][3] + vector.W;
+
+		result[3][0] = M[3][0] + vector.X;
+		result[3][1] = M[3][1] + vector.Y;
+		result[3][2] = M[3][2] + vector.Z;
+		result[3][3] = M[3][3] + vector.W;
+
+		return result;
+	}
+
+	Matrix4f& operator+=(Vector4f vector)
+	{
+		M[0][0] += vector.X;
+		M[0][1] += vector.Y;
+		M[0][2] += vector.Z;
+		M[0][3] += vector.W;
+
+		M[1][0] += vector.X;
+		M[1][1] += vector.Y;
+		M[1][2] += vector.Z;
+		M[1][3] += vector.W;
+
+		M[2][0] += vector.X;
+		M[2][1] += vector.Y;
+		M[2][2] += vector.Z;
+		M[2][3] += vector.W;
+
+		M[3][0] += vector.X;
+		M[3][1] += vector.Y;
+		M[3][2] += vector.Z;
+		M[3][3] += vector.W;
+
+		return *this;
+	}
+
+	Matrix4f operator-(Vector4f vector) const
+	{
+		Matrix4f result;
+
+		result[0][0] = M[0][0] - vector.X;
+		result[0][1] = M[0][1] - vector.Y;
+		result[0][2] = M[0][2] - vector.Z;
+		result[0][3] = M[0][3] - vector.W;
+
+		result[1][0] = M[1][0] - vector.X;
+		result[1][1] = M[1][1] - vector.Y;
+		result[1][2] = M[1][2] - vector.Z;
+		result[1][3] = M[1][3] - vector.W;
+
+		result[2][0] = M[2][0] - vector.X;
+		result[2][1] = M[2][1] - vector.Y;
+		result[2][2] = M[2][2] - vector.Z;
+		result[2][3] = M[2][3] - vector.W;
+
+		result[3][0] = M[3][0] - vector.X;
+		result[3][1] = M[3][1] - vector.Y;
+		result[3][2] = M[3][2] - vector.Z;
+		result[3][3] = M[3][3] - vector.W;
+
+		return result;
+	}
+
+	Matrix4f& operator-=(Vector4f vector)
+	{
+		M[0][0] -= vector.X;
+		M[0][1] -= vector.Y;
+		M[0][2] -= vector.Z;
+		M[0][3] -= vector.W;
+
+		M[1][0] -= vector.X;
+		M[1][1] -= vector.Y;
+		M[1][2] -= vector.Z;
+		M[1][3] -= vector.W;
+
+		M[2][0] -= vector.X;
+		M[2][1] -= vector.Y;
+		M[2][2] -= vector.Z;
+		M[2][3] -= vector.W;
+
+		M[3][0] -= vector.X;
+		M[3][1] -= vector.Y;
+		M[3][2] -= vector.Z;
+		M[3][3] -= vector.W;
+
+		return *this;
+	}
+
+	Matrix4f operator*(Vector4f vector) const
+	{
+		Matrix4f result;
+
+		result[0][0] = M[0][0] * vector.X;
+		result[0][1] = M[0][1] * vector.Y;
+		result[0][2] = M[0][2] * vector.Z;
+		result[0][3] = M[0][3] * vector.W;
+
+		result[1][0] = M[1][0] * vector.X;
+		result[1][1] = M[1][1] * vector.Y;
+		result[1][2] = M[1][2] * vector.Z;
+		result[1][3] = M[1][3] * vector.W;
+
+		result[2][0] = M[2][0] * vector.X;
+		result[2][1] = M[2][1] * vector.Y;
+		result[2][2] = M[2][2] * vector.Z;
+		result[2][3] = M[2][3] * vector.W;
+
+		result[3][0] = M[3][0] * vector.X;
+		result[3][1] = M[3][1] * vector.Y;
+		result[3][2] = M[3][2] * vector.Z;
+		result[3][3] = M[3][3] * vector.W;
+
+		return result;
+	}
+
+	Matrix4f& operator*=(Vector4f vector)
+	{
+		M[0][0] *= vector.X;
+		M[0][1] *= vector.Y;
+		M[0][2] *= vector.Z;
+		M[0][3] *= vector.W;
+
+		M[1][0] *= vector.X;
+		M[1][1] *= vector.Y;
+		M[1][2] *= vector.Z;
+		M[1][3] *= vector.W;
+
+		M[2][0] *= vector.X;
+		M[2][1] *= vector.Y;
+		M[2][2] *= vector.Z;
+		M[2][3] *= vector.W;
+
+		M[3][0] *= vector.X;
+		M[3][1] *= vector.Y;
+		M[3][2] *= vector.Z;
+		M[3][3] *= vector.W;
 
 		return *this;
 	}
