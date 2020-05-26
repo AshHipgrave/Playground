@@ -53,7 +53,7 @@ void PlaygroundGameApp::Draw(const GameTimer& gameTimer)
 {
 	if (m_VulkanInstance.IsInitialised())
 	{
-		m_VulkanInstance.DrawFrame();
+		m_VulkanInstance.DrawFrame(gameTimer.DeltaTime());
 	}
 
 	//TODO: Draw logic here.

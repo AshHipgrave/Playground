@@ -13,6 +13,16 @@
 
 #include "Vector2f.h"
 #include "Vector3f.h"
+#include "Matrix4f.h"
+
+#include "MatrixTransforms.h"
+
+struct UniformBufferObject
+{
+	Matrix4f Model;
+	Matrix4f View;
+	Matrix4f Projection;
+};
 
 struct QueueFamilyIndices
 {
@@ -79,7 +89,7 @@ public:
 	bool InitVulkan(HWND mainWindowHandle);
 	bool IsInitialised();
 
-	void DrawFrame();
+	void DrawFrame(const float& deltaTime);
 
 	void RecreateSwapChain();
 
@@ -97,6 +107,7 @@ private:
 	bool CreateImageViews();
 	bool CreateRenderPass();
 
+	bool CreateDescriptorSetLayout();
 	bool CreateGraphicsPipeline();
 	bool CreateFramebuffers();
 
@@ -106,8 +117,14 @@ private:
 
 	bool CreateVertexBuffer();
 	bool CreateIndexBuffer();
+	bool CreateUniformBuffers();
+
+	bool CreateDescriptorPool();
+	bool CreateDescriptorSets();
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize bufferSize);
+
+	void UpdateUniformBuffer(uint32_t currentImageIdx, const float& deltaTime);
 
 	bool CreateCommandBuffers();
 	bool CreateSyncObjects();
@@ -167,12 +184,22 @@ private:
 	VkSwapchainKHR m_VkSwapChainKhr = VK_NULL_HANDLE;
 	VkRenderPass m_VkRenderPass = VK_NULL_HANDLE;
 
+	VkDescriptorSetLayout m_VkDescriptorSetLayout = VK_NULL_HANDLE;
 	VkPipelineLayout m_VkPipelineLayout = VK_NULL_HANDLE;
-	VkPipeline m_VkGraphicsPipeline = VK_NULL_HANDLE;
 
+	VkPipeline m_VkGraphicsPipeline = VK_NULL_HANDLE;
 	VkCommandPool m_VkCommandPool = VK_NULL_HANDLE;
 
+	VkDescriptorPool m_VkDescriptorPool = VK_NULL_HANDLE;
+
+	VkFormat m_VkSwapChainFormat;
+	VkExtent2D m_VkSwapChainExtent2D;
+
 	VkDebugUtilsMessengerEXT m_VkDebugMessenger = nullptr;
+
+private:
+	std::vector<VkFence> m_InFlightFences;
+	std::vector<VkFence> m_ImagesInFlight;
 
 	std::vector<VkImage> m_SwapChainImages;
 	std::vector<VkImageView> m_SwapChainImageViews;
@@ -180,14 +207,13 @@ private:
 	std::vector<VkFramebuffer> m_VkFramebuffers;
 	std::vector<VkCommandBuffer> m_VkCommandBuffers;
 
-	std::vector<VkFence> m_InFlightFences;
-	std::vector<VkFence> m_ImagesInFlight;
+	std::vector<VkBuffer> m_VkUniformBuffers;
+	std::vector<VkDeviceMemory> m_VkUniformBuffersMemory;
+
+	std::vector<VkDescriptorSet> m_VkDescriptorSets;
 
 	std::vector<VkSemaphore> m_ImageAvailableSemaphores;
 	std::vector<VkSemaphore> m_RenderCompleteSemaphores;
-
-	VkFormat m_VkSwapChainFormat;
-	VkExtent2D m_VkSwapChainExtent2D;
 
 private:
 	const std::vector<Vertex> m_Verticies = 
