@@ -372,7 +372,7 @@ namespace MathLib_UnitTests
 		{
 			const Vector2f vec1(2.0f, 7.0f);
 
-			const float expectedResult = 7.280109889;
+			const float expectedResult = 7.280109889f;
 
 			const float calculatedResult = vec1.Length();
 
