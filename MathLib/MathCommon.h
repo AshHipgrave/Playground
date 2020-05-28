@@ -16,4 +16,9 @@ namespace MathLib
 	{
 		return radians * 180.0f / PI;
 	}
+
+	inline float Cot(float value)
+	{
+		return (1 / std::tan(value));
+	}
 };

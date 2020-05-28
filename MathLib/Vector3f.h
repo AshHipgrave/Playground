@@ -185,13 +185,6 @@ public:
 		return normalised;
 	}
 
-	Vector3f& Normalize()
-	{
-		this->Normalize();
-
-		return *this;
-	}
-
 public:
 	static float Dot(Vector3f vec1, Vector3f vec2)
 	{

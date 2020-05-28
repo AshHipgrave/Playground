@@ -650,7 +650,7 @@ bool VulkanInstance::CreateGraphicsPipeline()
 	rasterizerStageCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizerStageCreateInfo.lineWidth = 1.0f;
 	rasterizerStageCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizerStageCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE; //VK_FRONT_FACE_COUNTER_CLOCKWISE; //TODO?!
+	rasterizerStageCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizerStageCreateInfo.depthBiasEnable = VK_FALSE;
 	rasterizerStageCreateInfo.depthBiasConstantFactor = 0.0f;
 	rasterizerStageCreateInfo.depthBiasClamp = 0.0f;
@@ -1001,11 +1001,11 @@ void VulkanInstance::UpdateUniformBuffer(uint32_t currentImageIdx, const float& 
 {
 	UniformBufferObject uniformBufferObj = {};
 
-	uniformBufferObj.Model = MathLib::Rotate(Matrix4f::Identity(), deltaTime * MathLib::DegreesToRadians(90.0f), Vector3f(0.0f, 0.0f, 1.0f));
+	uniformBufferObj.Model = MathLib::Rotate(Matrix4f::Identity(), 0, Vector3f(0.0f, 0.0f, 1.0f));
 	
-	uniformBufferObj.View = MathLib::LookAt(Vector3f(2.0f, 2.0f, 2.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 1.0f));
+	uniformBufferObj.View = Matrix4f::Identity(); //MathLib::LookAtRH(Vector3f(5.0f, 5.0f, 5.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 1.0f));
 
-	uniformBufferObj.Projection = MathLib::Perspective(MathLib::DegreesToRadians(45.0f), m_VkSwapChainExtent2D.width / (float)m_VkSwapChainExtent2D.height, 0.1f, 10.0f);
+	uniformBufferObj.Projection = Matrix4f::Identity(); //MathLib::PerspectiveFoVRH(MathLib::DegreesToRadians(45.0f), m_VkSwapChainExtent2D.width / (float)m_VkSwapChainExtent2D.height, 0.1f, 10.0f);
 
 	//uniformBufferObj.Projection[1][1] *= -1; //TODO: Is this needed?
 
