@@ -8,6 +8,10 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_win32.h>
 
+#define GLM_FORCE_RADIANS
+#include "glm.hpp"
+#include "gtc\matrix_transform.hpp"
+
 #include "imgui_impl_win32.h"
 #include "imgui_impl_vulkan.h"
 
@@ -19,6 +23,10 @@
 
 struct UniformBufferObject
 {
+	/*alignas(16) glm::mat4 Model;
+	alignas(16) glm::mat4 View;
+	alignas(16) glm::mat4 Projection;*/
+
 	Matrix4f Model;
 	Matrix4f View;
 	Matrix4f Projection;

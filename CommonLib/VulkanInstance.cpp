@@ -1,5 +1,9 @@
 #include "VulkanInstance.h"
 
+#include "gtx/string_cast.hpp"
+
+#include <iostream>
+
 VulkanInstance::VulkanInstance()
 {
 }
@@ -650,7 +654,7 @@ bool VulkanInstance::CreateGraphicsPipeline()
 	rasterizerStageCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizerStageCreateInfo.lineWidth = 1.0f;
 	rasterizerStageCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizerStageCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizerStageCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizerStageCreateInfo.depthBiasEnable = VK_FALSE;
 	rasterizerStageCreateInfo.depthBiasConstantFactor = 0.0f;
 	rasterizerStageCreateInfo.depthBiasClamp = 0.0f;
@@ -1001,13 +1005,36 @@ void VulkanInstance::UpdateUniformBuffer(uint32_t currentImageIdx, const float& 
 {
 	UniformBufferObject uniformBufferObj = {};
 
-	uniformBufferObj.Model = MathLib::Rotate(Matrix4f::Identity(), 0, Vector3f(0.0f, 0.0f, 1.0f));
-	
-	uniformBufferObj.View = Matrix4f::Identity(); //MathLib::LookAtRH(Vector3f(5.0f, 5.0f, 5.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 1.0f));
+	/*
+	uniformBufferObj.Model = glm::rotate(glm::mat4(1.0f), deltaTime * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	uniformBufferObj.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	uniformBufferObj.Projection = glm::perspective(glm::radians(45.0f), m_VkSwapChainExtent2D.width / (float)m_VkSwapChainExtent2D.height, 0.1f, 10.0f);
+	*/
 
-	uniformBufferObj.Projection = Matrix4f::Identity(); //MathLib::PerspectiveFoVRH(MathLib::DegreesToRadians(45.0f), m_VkSwapChainExtent2D.width / (float)m_VkSwapChainExtent2D.height, 0.1f, 10.0f);
+	/*
+	uniformBufferObj.Model = Matrix4f(
+		 0.999998f,  0.00582f, 0.000000f, 0.000000f,
+		-0.000582f,  0.99998f, 0.000000f, 0.000000f,
+		 0.000000f, 0.000000f, 1.000000f, 0.000000f,
+		 0.000000f, 0.000000f, 0.000000f, 1.000000f);
 
-	//uniformBufferObj.Projection[1][1] *= -1; //TODO: Is this needed?
+	uniformBufferObj.View = Matrix4f(
+		-0.707107f, -0.408248f,  0.577350f, 0.000000f,
+		 0.707107f, -0.408248f,  0.577350f, 0.000000f,
+		 0.000000f,  0.816497f,  0.577350f, 0.000000f,
+		-0.000000f, -0.000000f, -3.464102f, 1.000000f);
+
+	uniformBufferObj.Projection = Matrix4f(
+		1.810660f,  0.000000f,  0.000000f,  0.000000f,
+		0.000000f,  2.414213f,  0.000000f,  0.000000f,
+		0.000000f,  0.000000f, -1.020202f, -1.000000f,
+		0.000000f,  0.000000f, -0.202020f,  0.000000f);
+	*/
+	uniformBufferObj.Model = MathLib::Rotate(Matrix4f::Identity(), deltaTime * MathLib::DegreesToRadians(90.0f), Vector3f(0.0f, 0.0f, 1.0f));
+	uniformBufferObj.View = MathLib::LookAtRH(Vector3f(2.0f, 2.0f, 2.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 1.0f));
+	uniformBufferObj.Projection = MathLib::PerspectiveFoVRH(MathLib::DegreesToRadians(45.0f), m_VkSwapChainExtent2D.width / (float)m_VkSwapChainExtent2D.height, 0.1f, 10.0f);
+
+	uniformBufferObj.Projection[1][1] *= -1; 
 
 	void* data;
 	::vkMapMemory(m_VkDevice, m_VkUniformBuffersMemory[currentImageIdx], 0, sizeof(uniformBufferObj), 0, &data);
