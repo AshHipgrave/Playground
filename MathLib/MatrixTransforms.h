@@ -59,7 +59,7 @@ namespace MathLib
 			xAxis.X, yAxis.Y, zAxis.X, 0.0f,
 			xAxis.Y, yAxis.Y, zAxis.Y, 0.0f,
 			xAxis.Z, yAxis.Z, zAxis.Z, 0.0f,
-			xDot, yDot, -zDot, 1.0f); // TODO: Negating ZDot might not work with DX12?
+			xDot, yDot, -zDot, 1.0f);
 	}
 
 	inline Matrix4f PerspectiveFoVLH(const float& fieldOfView, const float& aspectRatio, const float& nearPlane, const float& farPlane)
