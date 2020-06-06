@@ -65,7 +65,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\glm;C:\Users\Ashley\Documents\GitHub\Playground\MathLib;C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\Vulkan-1.2.135.0\Include;C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\imgui-1.76;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\stb_image-2.25;C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\glm;C:\Users\Ashley\Documents\GitHub\Playground\MathLib;C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\Vulkan-1.2.135.0\Include;C:\Users\Ashley\Documents\GitHub\Playground\ThirdParty\imgui-1.76;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
