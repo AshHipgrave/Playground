@@ -8,4 +8,6 @@ Basic framework for messing around with various game-dev and rendering related t
   
 *PlaygroundGameApp* - Place to throw code currently being prototyped (hopefully) without having to worry about the underlying platform/graphics API etc.  
   
-*Utils/MathLib_UnitTests* - Unit testing library for MathLib to ensure the library works correctly and isn't caclulating anything.
+*Utils/MathLib_UnitTests* - Unit testing library for MathLib to ensure the library works correctly and isn't caclulating anything incorrectly.
+
+Still very much a work in progress.
